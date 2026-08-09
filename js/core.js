@@ -419,6 +419,26 @@ function simplifyQual(qualString) {
   return model;
 }
 
+// ── Driver Badge Classification ──────────────────────────────────────
+// Categorizes a simplified vehicle name into the Driver Badge component
+// it counts toward: Wheeled (W), Tracked (T), or Special (S).
+const BADGE_ORDER = ['W', 'T', 'S'];
+
+function classifyBadge(vehicleName) {
+  if (!vehicleName) return 'W';
+  if (vehicleName === 'BEB (Bridge Erection Boat)') return 'S';
+  if (vehicleName.startsWith('AMPV') ||
+      vehicleName.startsWith('ACE (Armored Combat Earthmover)') ||
+      vehicleName.startsWith('DOZER') ||
+      // CAT 330 / JD 240D LCR — crawler excavators based on standard mfr.
+      // model naming, not unit-verified. Correct here if your actual
+      // equipment differs.
+      vehicleName.startsWith('EXCAVATOR') ||
+      // M7 FRS — built on the M113 tracked chassis.
+      vehicleName.startsWith('FRS (Forward Repair System)')) return 'T';
+  return 'W';
+}
+
 // Convert Excel serial date number to JS Date
 function excelSerialToDate(serial) {
   if (!serial || typeof serial !== 'number') return null;
@@ -451,6 +471,15 @@ function parseGCSS(workbook) {
     const qual = row[6] ? String(row[6]).trim() : '';
     const prof = row[7] ? String(row[7]).trim().toUpperCase() : 'STANDARD';
 
+    // Start date — may be serial number or already a Date
+    let startDate = null;
+    const rawStart = row[8];
+    if (rawStart instanceof Date) {
+      startDate = rawStart;
+    } else if (typeof rawStart === 'number') {
+      startDate = excelSerialToDate(rawStart);
+    }
+
     // End date — may be serial number or already a Date
     let endDate = null;
     const rawEnd = row[9];
@@ -466,6 +495,7 @@ function parseGCSS(workbook) {
       eic:        row[5] || '',
       qual,
       proficiency: prof,
+      startDate,
       endDate,
       simplified: simplifyQual(qual),
     });
@@ -486,13 +516,14 @@ function parseTroopInfo(workbook) {
   for (let i = 1; i < raw.length; i++) {
     const row = raw[i];
     if (!row[0]) continue;
-    const platoon = row[0] ? String(row[0]).trim().toUpperCase() : '';
-    const rank    = row[1] ? String(row[1]).trim() : '';
-    const last    = row[2] ? String(row[2]).trim().toUpperCase() : '';
-    const first   = row[3] ? String(row[3]).trim().toUpperCase() : '';
+    const platoon   = row[0] ? String(row[0]).trim().toUpperCase() : '';
+    const rank      = row[1] ? String(row[1]).trim() : '';
+    const last      = row[2] ? String(row[2]).trim().toUpperCase() : '';
+    const first     = row[3] ? String(row[3]).trim().toUpperCase() : '';
+    const suspended = row[4] ? /^Y(ES)?$/i.test(String(row[4]).trim()) : false;
     const fullName = normalizeName(`${first} ${last}`);
     if (fullName.trim()) {
-      troops[fullName] = { platoon, rank, last, first };
+      troops[fullName] = { platoon, rank, last, first, suspended };
     }
   }
   return troops;
@@ -522,6 +553,7 @@ function buildSoldiers(gcssRows, troopMap) {
   const expired = [];
   const expiringSoon = [];
   const restricted = [];
+  const suspended = [];
   const notInTroop = [];
   const notInGCSS = [];
 
@@ -529,17 +561,27 @@ function buildSoldiers(gcssRows, troopMap) {
     const info = troopMap[name] || {};
     const flags = [];
 
+    if (info.suspended) {
+      flags.push('SUSPENDED LICENSE');
+    }
+
+    const badgeSet = new Set();
+    const MIN_HELD_MS = 365 * 86400000; // 12 months
+
     for (const lic of data.licenses) {
-      const end  = lic.endDate;
-      const prof = lic.proficiency;
-      const veh  = lic.simplified;
+      const end   = lic.endDate;
+      const start = lic.startDate;
+      const prof  = lic.proficiency;
+      const veh   = lic.simplified;
 
       // Dummy dates far in future (year > 2050) mean no real expiry
       const isDummy = end && end.getFullYear() > 2050;
+      let expiredNow = false;
 
       if (end && !isDummy && !isNaN(end)) {
         const daysLeft = Math.floor((end - now) / 86400000);
         if (daysLeft < 0) {
+          expiredNow = true;
           expired.push({ name, rank: info.rank || '', platoon: info.platoon || 'UNKNOWN',
                          vehicle: veh, endDate: formatDate(end) });
           flags.push(`${veh}:EXPIRED`);
@@ -555,6 +597,13 @@ function buildSoldiers(gcssRows, troopMap) {
                           vehicle: veh, proficiency: prof });
         flags.push(`${veh}:${prof}`);
       }
+
+      // Driver Badge eligibility — STANDARD proficiency, not expired,
+      // held continuously for at least 12 months, and not suspended.
+      const heldLongEnough = start && !isNaN(start) && (now - start) >= MIN_HELD_MS;
+      if (!info.suspended && prof === 'STANDARD' && !expiredNow && heldLongEnough) {
+        badgeSet.add(classifyBadge(veh));
+      }
     }
 
     // Deduplicate flags
@@ -563,6 +612,10 @@ function buildSoldiers(gcssRows, troopMap) {
 
     const inTroop = troopNames.has(name);
     if (!inTroop) notInTroop.push(name);
+
+    if (info.suspended) {
+      suspended.push({ name, rank: info.rank || '', platoon: inTroop ? (info.platoon || 'UNKNOWN') : 'UNKNOWN' });
+    }
 
     soldiers[name] = {
       name,
@@ -574,6 +627,8 @@ function buildSoldiers(gcssRows, troopMap) {
       first:    info.first || (name.includes(' ') ? name.split(' ')[0] : ''),
       vehicles: [...data.vehicles].sort(),
       flags:    dedupedFlags,
+      suspended: !!info.suspended,
+      badges:   BADGE_ORDER.filter(b => badgeSet.has(b)),
     };
   }
 
@@ -593,6 +648,7 @@ function buildSoldiers(gcssRows, troopMap) {
     expired,
     expiringSoon,
     restricted,
+    suspended,
   };
 
   return { soldiers, matchReport };
