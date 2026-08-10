@@ -897,13 +897,17 @@ async function buildRoadTestPDF(soldiers, examiner, vehicle, route, dateStr, tem
       const h      = page.getSize().height;
       const stamp  = (text, x, y, size=9) =>
         page.drawText(text, {x, y:h-y, size, font, color:rgb(0, 0, 0)});
-      stamp(name,     180,  80, 9);
-      stamp(examiner, 430,  80, 9);
-      stamp(dateStr,  470,  50, 9);
-      stamp(route,    350, 103, 9);
-      stamp(vehicle,  330, 663, 9);
-      const [cp] = await outDoc.copyPages(pdfDoc, [0]);
-      outDoc.addPage(cp);
+      // Top portion of DA 6125 (Road Test Score Sheet) — GCSS/DOD ID left blank on purpose.
+      stamp(name,               55,  93, 9);   // NAME OF DRIVER
+      stamp(examiner,          307,  93, 9);   // NAME OF EXAMINER
+      stamp(dateStr,           436,  59, 9);   // DATE
+      stamp('GO',              199, 114, 9);   // SCORE
+      stamp(route,             307, 114, 9);   // ROUTE
+      stamp(vehicle,           280, 672, 8);   // NOTES line 1
+      stamp('PMCS TEST: GO',   280, 684, 8);   // NOTES line 2
+      // Copy every page of the template (front + back), not just the front.
+      const copied = await outDoc.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      copied.forEach(cp => outDoc.addPage(cp));
     }
     return new Blob([await outDoc.save()], {type:'application/pdf'});
   }
