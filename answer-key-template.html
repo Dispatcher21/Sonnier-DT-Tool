@@ -114,6 +114,9 @@
   .preview-qnum{font-family:var(--mono);font-size:.55rem;color:#444;position:absolute;top:2px;left:3px;}
   .preview-ans{font-family:Arial,sans-serif;font-size:.82rem;font-weight:800;text-align:center;
     display:flex;align-items:center;justify-content:center;height:100%;padding-top:4px;}
+  .preview-sa-row{display:flex;align-items:baseline;gap:.5rem;border-bottom:1px solid #999;padding:.3rem 0;}
+  .preview-sa-qnum{font-family:Arial,sans-serif;font-size:.78rem;font-weight:800;flex-shrink:0;}
+  .preview-sa-text{font-family:Arial,sans-serif;font-size:.78rem;}
   .preview-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
     border-top:1.5px solid #111;margin-top:1rem;padding-top:.6rem;font-family:Arial,sans-serif;font-size:.7rem;}
   .preview-footer b{font-weight:800;}
@@ -190,20 +193,25 @@
       <span class="step-tag" id="added-tag">0 QUESTIONS</span>
     </div>
     <div class="step-body">
-      <div class="step-desc">Multiple Choice questions and True/False questions are automatically grouped into their own sections, in the order you add them — matching how the Paperwork Assistor prints the answer sheet.</div>
+      <div class="step-desc">Multiple Choice, Short Answer, and True/False questions are automatically grouped into their own sections — matching how the Paperwork Assistor prints the answer sheet.</div>
       <div class="form-grid">
         <div class="field">
           <label>Type</label>
           <select id="a-type" onchange="onTypeChange()">
             <option value="MC">Multiple Choice</option>
+            <option value="SA">Short Answer / Fill in Blank</option>
             <option value="TF">True / False</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field" id="field-answer-select">
           <label>Answer</label>
           <select id="a-answer">
             <option>A</option><option>B</option><option>C</option><option>D</option>
           </select>
+        </div>
+        <div class="field hidden" id="field-answer-text">
+          <label>Expected Answer</label>
+          <input type="text" id="a-answer-text" placeholder="e.g. 50 FEET">
         </div>
         <div>
           <button class="btn-sm-ok" onclick="addQuestion()">+ ADD</button>
@@ -223,6 +231,11 @@
       <h2>Preview &amp; Download</h2>
     </div>
     <div class="step-body">
+      <div class="field" style="max-width:280px;margin-bottom:1rem;">
+        <label>Vehicle / Test Name</label>
+        <input type="text" id="a-vehicle" placeholder="e.g. CBT, LMTV, M30BEB" style="text-transform:uppercase" oninput="renderPreview()">
+      </div>
+
       <div class="summary" id="summary">0 questions</div>
 
       <div class="preview-paper" id="preview">
@@ -240,31 +253,49 @@
 startClock('clock');
 
 let mcAnswers = [];  // ['A','C','B',...]
+let saAnswers = [];  // ['50 FEET','HAND SIGNAL',...]
 let tfAnswers = [];  // ['TRUE','FALSE',...]
 
 function onTypeChange() {
-  const type = document.getElementById('a-type').value;
-  const sel  = document.getElementById('a-answer');
-  sel.innerHTML = type === 'MC'
-    ? '<option>A</option><option>B</option><option>C</option><option>D</option>'
-    : '<option>TRUE</option><option>FALSE</option>';
+  const type      = document.getElementById('a-type').value;
+  const selField  = document.getElementById('field-answer-select');
+  const textField = document.getElementById('field-answer-text');
+  if (type === 'SA') {
+    selField.classList.add('hidden');
+    textField.classList.remove('hidden');
+  } else {
+    textField.classList.add('hidden');
+    selField.classList.remove('hidden');
+    const sel = document.getElementById('a-answer');
+    sel.innerHTML = type === 'MC'
+      ? '<option>A</option><option>B</option><option>C</option><option>D</option>'
+      : '<option>TRUE</option><option>FALSE</option>';
+  }
 }
 
 function addQuestion() {
   const type = document.getElementById('a-type').value;
-  const ans  = document.getElementById('a-answer').value;
-  if (type === 'MC') mcAnswers.push(ans); else tfAnswers.push(ans);
+  if (type === 'SA') {
+    const txt = document.getElementById('a-answer-text').value.trim().toUpperCase();
+    if (!txt) { alert('Enter the expected answer text.'); return; }
+    saAnswers.push(txt);
+    document.getElementById('a-answer-text').value = '';
+  } else {
+    const ans = document.getElementById('a-answer').value;
+    if (type === 'MC') mcAnswers.push(ans); else tfAnswers.push(ans);
+  }
   renderAdded();
   renderPreview();
 }
 
 function removeMC(i) { mcAnswers.splice(i, 1); renderAdded(); renderPreview(); }
+function removeSA(i) { saAnswers.splice(i, 1); renderAdded(); renderPreview(); }
 function removeTF(i) { tfAnswers.splice(i, 1); renderAdded(); renderPreview(); }
 
-function combinedKey() { return [...mcAnswers, ...tfAnswers]; }
+function combinedKey() { return [...mcAnswers, ...saAnswers, ...tfAnswers]; }
 
 function renderAdded() {
-  const total = mcAnswers.length + tfAnswers.length;
+  const total = mcAnswers.length + saAnswers.length + tfAnswers.length;
   document.getElementById('added-tag').textContent = `${total} QUESTIONS`;
   const el = document.getElementById('added-list');
   if (!total) { el.innerHTML = '<div class="added-empty">No questions added yet.</div>'; return; }
@@ -273,8 +304,11 @@ function renderAdded() {
   mcAnswers.forEach((a, i) => {
     html += `<span class="added-tag">Q${i+1}: ${a} <button onclick="removeMC(${i})">✕</button></span>`;
   });
+  saAnswers.forEach((a, i) => {
+    html += `<span class="added-tag">Q${mcAnswers.length+i+1}: ${a} <button onclick="removeSA(${i})">✕</button></span>`;
+  });
   tfAnswers.forEach((a, i) => {
-    html += `<span class="added-tag">Q${mcAnswers.length+i+1}: ${a} <button onclick="removeTF(${i})">✕</button></span>`;
+    html += `<span class="added-tag">Q${mcAnswers.length+saAnswers.length+i+1}: ${a} <button onclick="removeTF(${i})">✕</button></span>`;
   });
   el.innerHTML = html;
 }
@@ -283,8 +317,10 @@ function renderAdded() {
 function renderPreview() {
   const key = combinedKey();
   const nQ  = key.length;
-  document.getElementById('summary').textContent =
-    nQ ? `${mcAnswers.length} multiple choice + ${tfAnswers.length} true/false = ${nQ} total questions` : '0 questions';
+  const vehicle = document.getElementById('a-vehicle').value.trim().toUpperCase();
+  document.getElementById('summary').textContent = nQ
+    ? `${mcAnswers.length} multiple choice + ${saAnswers.length} short answer + ${tfAnswers.length} true/false = ${nQ} total questions`
+    : '0 questions';
   document.getElementById('btn-dl').disabled = nQ === 0;
 
   const preview = document.getElementById('preview');
@@ -299,17 +335,26 @@ function renderPreview() {
       <div class="preview-ans">${ans || '—'}</div>
     </div>`;
 
+  let qOffset = 0;
   let html = `
     <div class="preview-title">Written Examination — Answer Sheet</div>
-    <div class="preview-sub">AR 600-55 Compliant &nbsp;//&nbsp; Examiner Copy — Secure Document</div>`;
+    <div class="preview-sub">${vehicle ? vehicle + ' &nbsp;//&nbsp; ' : ''}AR 600-55 Compliant &nbsp;//&nbsp; Examiner Copy — Secure Document</div>`;
 
   if (mcAnswers.length) {
     html += `<div class="preview-sec-lbl">Multiple Choice (Questions 1 – ${mcAnswers.length})</div>`;
     html += `<div class="preview-grid">${mcAnswers.map((a,i) => cell(i+1, a)).join('')}</div>`;
+    qOffset += mcAnswers.length;
+  }
+  if (saAnswers.length) {
+    html += `<div class="preview-sec-lbl">Short Answer / Fill in the Blank (Questions ${qOffset+1} – ${qOffset+saAnswers.length})</div>`;
+    html += '<div class="preview-sa">' + saAnswers.map((a,i) =>
+      `<div class="preview-sa-row"><span class="preview-sa-qnum">${qOffset+i+1}.</span><span class="preview-sa-text">${a}</span></div>`
+    ).join('') + '</div>';
+    qOffset += saAnswers.length;
   }
   if (tfAnswers.length) {
-    html += `<div class="preview-sec-lbl">True / False (Questions ${mcAnswers.length+1} – ${nQ})</div>`;
-    html += `<div class="preview-grid">${tfAnswers.map((a,i) => cell(mcAnswers.length+i+1, a)).join('')}</div>`;
+    html += `<div class="preview-sec-lbl">True / False (Questions ${qOffset+1} – ${nQ})</div>`;
+    html += `<div class="preview-grid">${tfAnswers.map((a,i) => cell(qOffset+i+1, a)).join('')}</div>`;
   }
 
   html += `
@@ -330,12 +375,13 @@ function downloadBlank() {
     ['QUESTION #', 'ANSWER', 'NOTES'],
     [1, 'A', 'Multiple choice: A, B, C, or D'],
     [2, 'C', ''],
-    [3, 'TRUE', 'True/False: TRUE or FALSE'],
-    [4, 'B', ''],
-    [5, 'FALSE', ''],
+    [3, '50 FEET', 'Short answer / fill in the blank: any text'],
+    [4, 'TRUE', 'True/False: TRUE or FALSE'],
+    [5, 'B', ''],
+    [6, 'FALSE', ''],
   ];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:14},{wch:12},{wch:35}];
+  ws['!cols'] = [{wch:14},{wch:12},{wch:38}];
   XLSX.utils.book_append_sheet(wb, ws, 'ANSWER KEY');
   const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
   triggerDownload(
@@ -345,6 +391,9 @@ function downloadBlank() {
 }
 
 // ── Step 2: load existing ─────────────────────────────────────────────
+const MC_VALS = new Set(['A','B','C','D']);
+const TF_VALS = new Set(['TRUE','FALSE']);
+
 function loadExisting() {
   const input = document.getElementById('f-key');
   if (!input.files.length) return;
@@ -364,10 +413,12 @@ function loadExisting() {
       showErr('err-load', 'No answers found. Check column B has your answers.');
       return;
     }
-    const isCBT = key.some(a => a === 'TRUE' || a === 'FALSE');
-    const mcEnd = isCBT ? key.findIndex(a => a === 'TRUE' || a === 'FALSE') : key.length;
-    mcAnswers = key.slice(0, mcEnd);
-    tfAnswers = isCBT ? key.slice(mcEnd) : [];
+    // Classify by value, not position, so it works regardless of row order
+    // and correctly buckets anything that isn't A/B/C/D or TRUE/FALSE as
+    // a Short Answer question.
+    mcAnswers = key.filter(a => MC_VALS.has(a));
+    tfAnswers = key.filter(a => TF_VALS.has(a));
+    saAnswers = key.filter(a => !MC_VALS.has(a) && !TF_VALS.has(a));
 
     document.getElementById('uz-key').classList.add('has');
     document.getElementById('fn-key').textContent = file.name;
@@ -388,6 +439,10 @@ function clearExisting() {
 }
 
 // ── Step 4: download ───────────────────────────────────────────────────
+function sanitizeFilePart(s) {
+  return s.trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_-]/g, '');
+}
+
 function downloadKey() {
   showErr('err-dl', null);
   const key = combinedKey();
@@ -396,14 +451,18 @@ function downloadKey() {
   const wb  = XLSX.utils.book_new();
   const aoa = [['QUESTION #', 'ANSWER', 'NOTES']];
   mcAnswers.forEach((a, i) => aoa.push([i+1, a, 'Multiple Choice']));
-  tfAnswers.forEach((a, i) => aoa.push([mcAnswers.length+i+1, a, 'True/False']));
+  saAnswers.forEach((a, i) => aoa.push([mcAnswers.length+i+1, a, 'Short Answer']));
+  tfAnswers.forEach((a, i) => aoa.push([mcAnswers.length+saAnswers.length+i+1, a, 'True/False']));
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [{wch:14},{wch:12},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws, 'ANSWER KEY');
   const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+
+  const vehicle  = sanitizeFilePart(document.getElementById('a-vehicle').value || '');
+  const filename = vehicle ? `AnswerKey_${vehicle}.xlsx` : `AnswerKey_${dateStamp()}.xlsx`;
   triggerDownload(
     new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
-    `AnswerKey_${dateStamp()}.xlsx`
+    filename
   );
 }
 

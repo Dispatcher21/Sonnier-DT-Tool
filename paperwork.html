@@ -714,9 +714,15 @@ async function generate() {
 // ── Answer Sheets PDF Builder ──────────────────────────────────────
 function buildAnswerSheetsPDF(soldiers, examiner, vehicle, dateStr, key) {
   const {jsPDF} = window.jspdf;
+  // Classify by value (not position) so Multiple Choice, Short Answer, and
+  // True/False questions always land in the right printed section
+  // regardless of the order they were entered in the source file.
+  const MC_VALS = new Set(['A','B','C','D']);
+  const TF_VALS = new Set(['TRUE','FALSE']);
+  const mcKey = key.filter(a => MC_VALS.has(a));
+  const tfKey = key.filter(a => TF_VALS.has(a));
+  const saKey = key.filter(a => !MC_VALS.has(a) && !TF_VALS.has(a));
   const nQ    = key.length;
-  const isCBT = key.some(a => a === 'TRUE' || a === 'FALSE');
-  const mcEnd = isCBT ? key.findIndex(a => a === 'TRUE' || a === 'FALSE') : nQ;
   const doc   = new jsPDF({orientation:'portrait', unit:'pt', format:'letter'});
   const W     = doc.internal.pageSize.getWidth();
 
@@ -773,14 +779,14 @@ function buildAnswerSheetsPDF(soldiers, examiner, vehicle, dateStr, key) {
     const cols  = 5;
     const cellW = (W-80)/cols;
     const cellH = 20;
+    let qOffset = 0;
 
     // MC section
-    const mcKey = isCBT ? key.slice(0, mcEnd) : key;
     if (mcKey.length) {
       doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(isCBT
-        ? `MULTIPLE CHOICE  (Questions 1 – ${mcEnd})`
-        : `ANSWER KEY  (${nQ} Questions)`, 40, y);
+      doc.text(nQ === mcKey.length
+        ? `ANSWER KEY  (${nQ} Questions)`
+        : `MULTIPLE CHOICE  (Questions 1 – ${mcKey.length})`, 40, y);
       y += 10;
       doc.setLineWidth(0.3);
 
@@ -803,21 +809,45 @@ function buildAnswerSheetsPDF(soldiers, examiner, vehicle, dateStr, key) {
         doc.text(ans || '—', x+(cellW-2)/2, cy+14, {align:'center'});
       }
       y += Math.ceil(mcKey.length/cols)*cellH + 10;
+      qOffset += mcKey.length;
     }
 
-    // T/F section
-    if (isCBT) {
+    // Short Answer / fill-in-the-blank section — full-width rows since
+    // these answers can be longer than a single letter or word.
+    if (saKey.length) {
       doc.setLineWidth(0.5);
       doc.line(40, y, W-40, y);
       y += 8;
       doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(`TRUE / FALSE  (Questions ${mcEnd+1} – ${nQ})`, 40, y);
+      doc.text(`SHORT ANSWER / FILL IN THE BLANK  (Questions ${qOffset+1} – ${qOffset+saKey.length})`, 40, y);
+      y += 12;
+      doc.setLineWidth(0.3);
+
+      saKey.forEach((ans, i) => {
+        const qNum = qOffset + i + 1;
+        doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text(`${qNum}.`, 40, y);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        doc.text(String(ans), 62, y);
+        doc.line(60, y+3, W-40, y+3);
+        y += 16;
+      });
+      y += 4;
+      qOffset += saKey.length;
+    }
+
+    // T/F section
+    if (tfKey.length) {
+      doc.setLineWidth(0.5);
+      doc.line(40, y, W-40, y);
+      y += 8;
+      doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(`TRUE / FALSE  (Questions ${qOffset+1} – ${qOffset+tfKey.length})`, 40, y);
       y += 10;
       doc.setLineWidth(0.3);
 
-      const tfKey = key.slice(mcEnd);
       tfKey.forEach((ans, ti) => {
-        const qNum = mcEnd+1+ti;
+        const qNum = qOffset+1+ti;
         const col  = ti % cols;
         const row  = Math.floor(ti / cols);
         const x    = 40 + col*cellW;
