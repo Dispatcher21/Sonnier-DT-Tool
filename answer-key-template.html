@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DT Helper">
+<meta name="theme-color" content="#4B5320">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<title>Answer Key Template // UNIT TOOLS</title>
+
+<script src="js/libs/xlsx-js-style.min.js"></script>
+<style>
+  :root{
+    --green:#4B5320;--green-lt:#6B7A32;--tan:#C8B560;--tan-lt:#DDD090;
+    --dark:#1A1F0E;--darker:#0F1208;--fg:#E8E4D0;--fg-dim:#9A9680;
+    --red:#CC2200;--ok:#5A8A30;--orange:#CC6600;
+    --panel:#222810;--border:#3A4018;
+    --mono:'Courier New',Courier,monospace;--cond:Arial Narrow,Arial,sans-serif;--body:Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--darker);color:var(--fg);font-family:var(--body);min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(74,83,32,.03) 2px,rgba(74,83,32,.03) 4px);}
+  header{background:var(--green);border-bottom:3px solid var(--tan);padding:0 2rem;
+    display:flex;align-items:center;gap:1.25rem;height:96px;position:sticky;top:0;z-index:100;}
+  .he img{height:68px;width:68px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+  .ht h1{font-family:var(--cond);font-size:1.95rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1;}
+  .ht p{font-family:var(--mono);font-size:.85rem;color:var(--tan-lt);letter-spacing:.08em;margin-top:4px;}
+  .ht .made{font-size:.55rem;color:var(--tan-lt);letter-spacing:.06em;margin-top:2px;opacity:.7;}
+  .hb{margin-left:auto;font-family:var(--mono);font-size:.85rem;color:var(--tan);text-align:right;line-height:1.6;white-space:pre;}
+  .back-bar{background:var(--dark);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.75rem;}
+  .back-btn{font-family:var(--mono);font-size:.75rem;color:var(--tan);text-decoration:none;}
+  .back-btn:hover{color:var(--tan-lt);}
+  .back-sep,.back-cur{font-family:var(--mono);font-size:.75rem;color:var(--fg-dim);}
+  main{max-width:900px;margin:0 auto;padding:2rem 1rem;}
+
+  .step{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:1.25rem;overflow:hidden;}
+  .step-header{background:var(--green);padding:.7rem 1rem;display:flex;align-items:center;gap:.75rem;}
+  .step-num{font-family:var(--mono);font-size:.7rem;color:var(--tan);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:2px;letter-spacing:.08em;}
+  .step-header h2{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
+  .step-tag{margin-left:auto;font-family:var(--mono);font-size:.6rem;color:var(--tan);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:2px;}
+  .step-body{padding:1.25rem;}
+  .step-desc{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);line-height:1.6;margin-bottom:.9rem;}
+
+  .uz{border:2px dashed var(--border);border-radius:4px;padding:1.25rem 1rem;text-align:center;
+    cursor:pointer;transition:all .2s;position:relative;background:rgba(0,0,0,.2);}
+  .uz:hover{border-color:var(--tan);}
+  .uz.has{border-color:var(--ok);border-style:solid;background:rgba(90,138,48,.08);}
+  .uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .uz .uz-icon{font-size:1.75rem;margin-bottom:.4rem;display:block;}
+  .uz .uz-lbl{font-family:var(--cond);font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg);display:block;margin-bottom:.2rem;}
+  .uz .uz-hint{font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);}
+  .uz .uz-fname{display:none;font-family:var(--mono);font-size:.65rem;color:var(--ok);margin-top:.3rem;word-break:break-all;}
+  .uz.has .uz-fname{display:block;}
+  .uz.has .uz-hint{display:none;}
+
+  .loaded-bar{background:rgba(90,138,48,.1);border:1px solid rgba(90,138,48,.3);border-radius:4px;
+    padding:.6rem .9rem;display:none;align-items:center;gap:.75rem;margin-top:.75rem;flex-wrap:wrap;}
+  .loaded-bar.show{display:flex;}
+  .loaded-info{font-family:var(--mono);font-size:.68rem;color:#88CC44;flex:1;}
+  .loaded-info strong{color:var(--fg);}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:.6rem;align-items:flex-end;}
+  @media(max-width:550px){.form-grid{grid-template-columns:1fr;}}
+  .field{display:flex;flex-direction:column;gap:.3rem;}
+  .field label{font-family:var(--cond);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-dim);}
+  .field input,.field select{background:var(--darker);border:1px solid var(--border);border-radius:3px;
+    color:var(--fg);font-family:var(--mono);font-size:.8rem;padding:.4rem .55rem;outline:none;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--tan);}
+
+  .added-list{margin-top:.9rem;}
+  .added-empty{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);padding:.5rem 0;}
+  .added-tag{display:inline-flex;align-items:center;gap:.5rem;background:rgba(90,138,48,.15);border:1px solid rgba(90,138,48,.3);
+    border-radius:3px;padding:4px 10px;margin:.2rem .3rem .2rem 0;font-family:var(--mono);font-size:.68rem;color:#c9e8b4;}
+  .added-tag button{background:none;border:none;color:var(--red);cursor:pointer;font-size:.75rem;padding:0;line-height:1;}
+
+  .btn{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+    padding:.75rem 2rem;border:none;border-radius:3px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem;}
+  .btn-primary{background:var(--ok);color:#fff;border:2px solid #6AAA38;width:100%;justify-content:center;font-size:1.1rem;}
+  .btn-primary:hover:not(:disabled){background:#6AAA38;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-sm-ok{background:var(--ok);color:#fff;border:none;font-size:.75rem;
+    padding:.45rem 1rem;font-family:var(--cond);font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+  .btn-sm{background:var(--dark);color:var(--fg-dim);border:1px solid var(--border);font-size:.75rem;
+    padding:.3rem .75rem;font-family:var(--cond);font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+  .btn-sm:hover{border-color:var(--red);color:var(--red);}
+  .btn-dl{background:var(--dark);color:var(--tan);border:2px solid var(--tan);text-decoration:none;
+    display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+    padding:.6rem 1.5rem;font-family:var(--cond);font-size:.95rem;font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;border-radius:3px;margin:.25rem;cursor:pointer;}
+  .btn-dl:hover{background:var(--tan);color:var(--dark);}
+
+  .summary{font-family:var(--mono);font-size:.72rem;color:var(--fg-dim);margin-bottom:.9rem;line-height:1.7;}
+  .summary strong{color:var(--fg);}
+  .err{background:rgba(204,34,0,.1);border:1px solid #CC2200;border-radius:4px;
+    padding:.75rem 1rem;font-family:var(--mono);font-size:.8rem;color:#FF6655;margin:.75rem 0;}
+  .hidden{display:none!important;}
+
+  /* Live preview — facsimile of the printed answer sheet */
+  .preview-paper{background:#fdfdfa;color:#111;border-radius:3px;padding:1.25rem 1.25rem 1.5rem;
+    box-shadow:0 4px 18px rgba(0,0,0,.35);}
+  .preview-title{font-family:var(--cond);font-size:1.05rem;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;text-align:center;border-bottom:1.5px solid #111;padding-bottom:.4rem;}
+  .preview-sub{font-family:var(--mono);font-size:.6rem;text-align:center;color:#555;margin:.35rem 0 .9rem;letter-spacing:.04em;}
+  .preview-empty{font-family:var(--mono);font-size:.75rem;color:#777;text-align:center;padding:1.5rem 0;}
+  .preview-sec-lbl{font-family:var(--cond);font-size:.78rem;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;margin:.9rem 0 .4rem;}
+  .preview-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+  @media(max-width:600px){.preview-grid{grid-template-columns:repeat(3,1fr);}}
+  .preview-cell{border:1px solid #111;border-radius:1px;padding:2px 3px 4px;min-height:38px;position:relative;background:#fff;}
+  .preview-qnum{font-family:var(--mono);font-size:.55rem;color:#444;position:absolute;top:2px;left:3px;}
+  .preview-ans{font-family:Arial,sans-serif;font-size:.82rem;font-weight:800;text-align:center;
+    display:flex;align-items:center;justify-content:center;height:100%;padding-top:4px;}
+  .preview-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+    border-top:1.5px solid #111;margin-top:1rem;padding-top:.6rem;font-family:Arial,sans-serif;font-size:.7rem;}
+  .preview-footer b{font-weight:800;}
+
+  @media(max-width:600px){
+    header{height:auto;min-height:64px;padding:.6rem 1rem;gap:.75rem;flex-wrap:wrap;}
+    .he img{height:44px;width:44px;}
+    .ht h1{font-size:1.35rem;letter-spacing:.08em;}
+    .ht p{font-size:.7rem;margin-top:2px;}
+    .ht .made{display:none;}
+    .hb{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="he"><img src="assets/icon.png" alt="Unit Tools"></div>
+  <div class="ht">
+    <h1>UNIT TOOLS</h1>
+    <p>DRIVER'S TRAINING ADMIN TOOLKIT</p>
+    <p class="made">MADE BY: SGT SONNIER, JOHN (WIP)</p>
+  </div>
+  <div class="hb" id="clock"></div>
+</header>
+<div class="back-bar">
+  <a class="back-btn" href="templates.html">← BACK</a>
+  <span class="back-sep">//</span>
+  <span class="back-cur">ANSWER KEY FILE</span>
+</div>
+<main>
+
+  <!-- STEP 1: Blank Template -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 1</span>
+      <h2>Download a Blank Template</h2>
+      <span class="step-tag">OPTIONAL</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Just need the file format to fill in yourself? Download a blank template with example rows showing the Multiple Choice and True/False formats.</div>
+      <button class="btn-dl" onclick="downloadBlank()">⬇ DOWNLOAD BLANK TEMPLATE</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Load existing -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <h2>Load an Existing Answer Key</h2>
+      <span class="step-tag">OPTIONAL</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Already have a key file? Load it here to preview it below, or keep adding questions to it. This replaces whatever you've built below so far.</div>
+      <div class="uz" id="uz-key">
+        <input type="file" id="f-key" accept=".xlsx,.xls" onchange="loadExisting()">
+        <span class="uz-icon">🔑</span>
+        <span class="uz-lbl">Upload Existing Answer Key</span>
+        <span class="uz-hint">Column A: Question # &nbsp;|&nbsp; Column B: Answer</span>
+        <span class="uz-fname" id="fn-key"></span>
+      </div>
+      <div class="loaded-bar" id="loaded-bar">
+        <div class="loaded-info" id="loaded-info"></div>
+        <button class="btn-sm" onclick="clearExisting()">✕ CLEAR</button>
+      </div>
+      <div id="err-load" class="err hidden"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Add questions -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <h2>Add Questions</h2>
+      <span class="step-tag" id="added-tag">0 QUESTIONS</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Multiple Choice questions and True/False questions are automatically grouped into their own sections, in the order you add them — matching how the Paperwork Assistor prints the answer sheet.</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Type</label>
+          <select id="a-type" onchange="onTypeChange()">
+            <option value="MC">Multiple Choice</option>
+            <option value="TF">True / False</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Answer</label>
+          <select id="a-answer">
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn-sm-ok" onclick="addQuestion()">+ ADD</button>
+        </div>
+      </div>
+
+      <div class="added-list" id="added-list">
+        <div class="added-empty">No questions added yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Live preview + download -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 4</span>
+      <h2>Preview &amp; Download</h2>
+    </div>
+    <div class="step-body">
+      <div class="summary" id="summary">0 questions</div>
+
+      <div class="preview-paper" id="preview">
+        <div class="preview-empty">Add questions above to see a live preview of the printed answer sheet.</div>
+      </div>
+
+      <div id="err-dl" class="err hidden" style="margin-top:1rem"></div>
+      <button class="btn btn-primary" id="btn-dl" onclick="downloadKey()" style="margin-top:1rem" disabled>⬇ DOWNLOAD ANSWER KEY FILE</button>
+    </div>
+  </div>
+
+</main>
+<script src="js/core.js"></script>
+<script>
+startClock('clock');
+
+let mcAnswers = [];  // ['A','C','B',...]
+let tfAnswers = [];  // ['TRUE','FALSE',...]
+
+function onTypeChange() {
+  const type = document.getElementById('a-type').value;
+  const sel  = document.getElementById('a-answer');
+  sel.innerHTML = type === 'MC'
+    ? '<option>A</option><option>B</option><option>C</option><option>D</option>'
+    : '<option>TRUE</option><option>FALSE</option>';
+}
+
+function addQuestion() {
+  const type = document.getElementById('a-type').value;
+  const ans  = document.getElementById('a-answer').value;
+  if (type === 'MC') mcAnswers.push(ans); else tfAnswers.push(ans);
+  renderAdded();
+  renderPreview();
+}
+
+function removeMC(i) { mcAnswers.splice(i, 1); renderAdded(); renderPreview(); }
+function removeTF(i) { tfAnswers.splice(i, 1); renderAdded(); renderPreview(); }
+
+function combinedKey() { return [...mcAnswers, ...tfAnswers]; }
+
+function renderAdded() {
+  const total = mcAnswers.length + tfAnswers.length;
+  document.getElementById('added-tag').textContent = `${total} QUESTIONS`;
+  const el = document.getElementById('added-list');
+  if (!total) { el.innerHTML = '<div class="added-empty">No questions added yet.</div>'; return; }
+
+  let html = '';
+  mcAnswers.forEach((a, i) => {
+    html += `<span class="added-tag">Q${i+1}: ${a} <button onclick="removeMC(${i})">✕</button></span>`;
+  });
+  tfAnswers.forEach((a, i) => {
+    html += `<span class="added-tag">Q${mcAnswers.length+i+1}: ${a} <button onclick="removeTF(${i})">✕</button></span>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── Live preview — mirrors buildAnswerSheetsPDF's layout in paperwork.html ──
+function renderPreview() {
+  const key = combinedKey();
+  const nQ  = key.length;
+  document.getElementById('summary').textContent =
+    nQ ? `${mcAnswers.length} multiple choice + ${tfAnswers.length} true/false = ${nQ} total questions` : '0 questions';
+  document.getElementById('btn-dl').disabled = nQ === 0;
+
+  const preview = document.getElementById('preview');
+  if (!nQ) {
+    preview.innerHTML = '<div class="preview-empty">Add questions above to see a live preview of the printed answer sheet.</div>';
+    return;
+  }
+
+  const cell = (num, ans) => `
+    <div class="preview-cell">
+      <span class="preview-qnum">${num}</span>
+      <div class="preview-ans">${ans || '—'}</div>
+    </div>`;
+
+  let html = `
+    <div class="preview-title">Written Examination — Answer Sheet</div>
+    <div class="preview-sub">AR 600-55 Compliant &nbsp;//&nbsp; Examiner Copy — Secure Document</div>`;
+
+  if (mcAnswers.length) {
+    html += `<div class="preview-sec-lbl">Multiple Choice (Questions 1 – ${mcAnswers.length})</div>`;
+    html += `<div class="preview-grid">${mcAnswers.map((a,i) => cell(i+1, a)).join('')}</div>`;
+  }
+  if (tfAnswers.length) {
+    html += `<div class="preview-sec-lbl">True / False (Questions ${mcAnswers.length+1} – ${nQ})</div>`;
+    html += `<div class="preview-grid">${tfAnswers.map((a,i) => cell(mcAnswers.length+i+1, a)).join('')}</div>`;
+  }
+
+  html += `
+    <div class="preview-footer">
+      <span><b>SCORE:</b> ${nQ} / ${nQ}</span>
+      <span><b>(PASS)</b> / FAIL</span>
+      <span><b>EXAMINER:</b> ___________________</span>
+      <span><b>DATE:</b> ___________</span>
+    </div>`;
+
+  preview.innerHTML = html;
+}
+
+// ── Step 1: blank template (same format used in Paperwork Assistor) ──
+function downloadBlank() {
+  const wb  = XLSX.utils.book_new();
+  const aoa = [
+    ['QUESTION #', 'ANSWER', 'NOTES'],
+    [1, 'A', 'Multiple choice: A, B, C, or D'],
+    [2, 'C', ''],
+    [3, 'TRUE', 'True/False: TRUE or FALSE'],
+    [4, 'B', ''],
+    [5, 'FALSE', ''],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:14},{wch:12},{wch:35}];
+  XLSX.utils.book_append_sheet(wb, ws, 'ANSWER KEY');
+  const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  triggerDownload(
+    new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+    'AnswerKey_Template.xlsx'
+  );
+}
+
+// ── Step 2: load existing ─────────────────────────────────────────────
+function loadExisting() {
+  const input = document.getElementById('f-key');
+  if (!input.files.length) return;
+  const file = input.files[0];
+  showErr('err-load', null);
+  workbookFromFile(file).then(wb => {
+    const ws  = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    const key = [];
+    for (let i = 0; i < raw.length; i++) {
+      const row = raw[i];
+      if (!row[1]) continue;
+      const ans = String(row[1]).trim().toUpperCase();
+      if (ans && ans !== 'ANSWER' && ans !== 'ANS') key.push(ans);
+    }
+    if (!key.length) {
+      showErr('err-load', 'No answers found. Check column B has your answers.');
+      return;
+    }
+    const isCBT = key.some(a => a === 'TRUE' || a === 'FALSE');
+    const mcEnd = isCBT ? key.findIndex(a => a === 'TRUE' || a === 'FALSE') : key.length;
+    mcAnswers = key.slice(0, mcEnd);
+    tfAnswers = isCBT ? key.slice(mcEnd) : [];
+
+    document.getElementById('uz-key').classList.add('has');
+    document.getElementById('fn-key').textContent = file.name;
+    const bar = document.getElementById('loaded-bar');
+    bar.classList.add('show');
+    document.getElementById('loaded-info').innerHTML = `✓ LOADED: <strong>${key.length} questions</strong> from ${file.name}`;
+
+    renderAdded();
+    renderPreview();
+  }).catch(e => showErr('err-load', 'Error reading file: ' + e.message));
+}
+
+function clearExisting() {
+  document.getElementById('uz-key').classList.remove('has');
+  document.getElementById('fn-key').textContent = '';
+  document.getElementById('f-key').value = '';
+  document.getElementById('loaded-bar').classList.remove('show');
+}
+
+// ── Step 4: download ───────────────────────────────────────────────────
+function downloadKey() {
+  showErr('err-dl', null);
+  const key = combinedKey();
+  if (!key.length) { showErr('err-dl', 'Add at least one question first.'); return; }
+
+  const wb  = XLSX.utils.book_new();
+  const aoa = [['QUESTION #', 'ANSWER', 'NOTES']];
+  mcAnswers.forEach((a, i) => aoa.push([i+1, a, 'Multiple Choice']));
+  tfAnswers.forEach((a, i) => aoa.push([mcAnswers.length+i+1, a, 'True/False']));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:14},{wch:12},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws, 'ANSWER KEY');
+  const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  triggerDownload(
+    new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+    `AnswerKey_${dateStamp()}.xlsx`
+  );
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!msg) { el.classList.add('hidden'); return; }
+  el.textContent = '⚠ ' + msg;
+  el.classList.remove('hidden');
+}
+
+renderAdded();
+renderPreview();
+</script>
+</body>
+</html>
