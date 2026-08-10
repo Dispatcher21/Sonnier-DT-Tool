@@ -372,30 +372,6 @@ const PLATOON_ORDER = { 'HQ':0,'1ST':1,'2ND':2,'SUPPORT':3 };
 
 const PLATOON_LIST = ['HQ','1ST','2ND','SUPPORT'];
 
-const ANSWER_KEYS = {
-  'HMMV':    ['B','D','C','A','A','C','B','B','B','C','C','B','A','C','B','B','C','B','D','A'],
-  'HMMWV':   ['B','D','C','A','A','C','B','B','B','C','C','B','A','C','B','B','C','B','D','A'],
-  'CBT':     ['C','D','C','C','B','C','A','C','C','C','C','C','D','B','C','D','B','C','D','B',
-              'FALSE','TRUE','FALSE','TRUE','TRUE','TRUE','FALSE','TRUE','TRUE'],
-  'LMTV':    ['C','C','B','D','A','D','C','B','C','C','D','C','D','B','D','B','C','B','D','D'],
-  'GSA':     ['A','A','C','B','B','B','A','A','D','A','A','A','B','B','A','B','D','B','D','C'],
-  'HEMTT':   ['A','B','D','C','C','B','B','C','A','A','D','A','C','C','C','A','D','A','D','A'],
-  'LET':     ['C','C','B','A','A','B','C','A','B','A','D','C','D','C','B','C','C','B','C','A'],
-  'PLS':     ['B','B','B','D','D','C','B','C','A','B','A','C','D','C','A','B','C','B','D','D'],
-  'PLS_TRL': ['D','B','C','B','B','C','D','D','C','B','B','D','A','A','A','B','B','D','A','D'],
-  'BAP':     ['D','D','C','A','A','C','C','A','C','D','B','D','A','C','B','A','C','B','B','C'],
-  'BEB':     ['B','A','C','D','A','A','C','C','B','A','B','A','A','D','A','B','B','D','B','C'],
-  'WRECKER': ['D','B','B','C','D','C','D','D','A','B','B','A','C','A','B','B','A','A','A','B'],
-  'FUELER':  ['A','A','C','A','B','C','D','B','B','D','B','D','D','B','A','A','D','C','D','D'],
-  'DOZER':   ['D','A','A','A','D','C','A','B','B','B','D','B','D','B','C','D','B','A','D','A'],
-  'CRANE':   ['A','A','A','B','B','D','D','D','B','D','A','B','D','A','D','C','D','C','D','D'],
-  'HMEE':    ['B','B','C','B','A','A','C','A','A','D','B','A','A','B','A','A','B','D','A','B'],
-  'SKD_STR': ['A','A','D','C','C','B','C','B','C','D','B','C','D','C','A','A','D','A','A','B'],
-  'LOWBED':  ['C','B','C','A','B','C','C','B','D','C','A','C','A','B','C','A','A','B','C','C'],
-  'BRIDGE':  ['B','C','B','C','D','C','A','A','D','C','A','A','C','B','C','B','D','D','A','A'],
-  'HMV_TRL': ['A','B','A','C','B','D','B','A','C','C','A','C','B','B','A','C','D','B','B','B'],
-};
-
 // ── Helpers ────────────────────────────────────────────────────────
 
 function normalizeName(name) {
