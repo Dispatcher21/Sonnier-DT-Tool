@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DT Helper">
+<meta name="theme-color" content="#4B5320">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<title>Templates &amp; Guides // UNIT TOOLS</title>
+
+<style>
+  :root{
+    --green:#4B5320;--green-lt:#6B7A32;--tan:#C8B560;--tan-lt:#DDD090;
+    --dark:#1A1F0E;--darker:#0F1208;--fg:#E8E4D0;--fg-dim:#9A9680;
+    --panel:#222810;--border:#3A4018;--ok:#5A8A30;--wip:#C28A00;
+    --mono:'Courier New',Courier,monospace;--cond:Arial Narrow,Arial,sans-serif;--body:Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--darker);color:var(--fg);font-family:var(--body);min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(74,83,32,.03) 2px,rgba(74,83,32,.03) 4px);}
+  header{background:var(--green);border-bottom:3px solid var(--tan);padding:0 2rem;
+    display:flex;align-items:center;gap:1.25rem;height:96px;position:sticky;top:0;z-index:100;}
+  .he img{height:68px;width:68px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+  .ht h1{font-family:var(--cond);font-size:1.95rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1;}
+  .ht p{font-family:var(--mono);font-size:.85rem;color:var(--tan-lt);letter-spacing:.08em;margin-top:4px;}
+  .ht .made{font-size:.55rem;color:var(--tan-lt);letter-spacing:.06em;margin-top:2px;opacity:.7;}
+  .hb{margin-left:auto;font-family:var(--mono);font-size:.85rem;color:var(--tan);text-align:right;line-height:1.6;white-space:pre;}
+  .back-bar{background:var(--dark);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.75rem;}
+  .back-btn{font-family:var(--mono);font-size:.75rem;color:var(--tan);text-decoration:none;}
+  .back-btn:hover{color:var(--tan-lt);}
+  .back-sep,.back-cur{font-family:var(--mono);font-size:.75rem;color:var(--fg-dim);}
+  main{max-width:900px;margin:0 auto;padding:2rem 1rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);letter-spacing:.15em;
+    text-transform:uppercase;margin-bottom:1.5rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:1.5rem;
+    text-decoration:none;color:var(--fg);display:block;position:relative;
+    transition:border-color .2s,transform .15s;overflow:hidden;}
+  .card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(75,83,32,.15) 0%,transparent 60%);pointer-events:none;}
+  .card:hover{border-color:var(--tan);transform:translateY(-2px);}
+  .badge{position:absolute;top:.75rem;right:.75rem;font-family:var(--mono);font-size:.55rem;
+    color:var(--ok);background:rgba(90,138,48,.15);border:1px solid rgba(90,138,48,.3);
+    padding:2px 7px;border-radius:2px;letter-spacing:.1em;}
+  .badgeWIP{position:absolute;top:.75rem;right:.75rem;font-family:var(--mono);font-size:.55rem;
+    color:var(--wip);background:rgba(194,138,0,.15);border:1px solid rgba(194,138,0,.3);
+    padding:2px 7px;border-radius:2px;letter-spacing:.1em;}
+  .icon{font-size:2rem;display:block;margin-bottom:.75rem;}
+  .title{font-family:var(--cond);font-size:1.25rem;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;margin-bottom:.5rem;}
+  .desc{font-family:var(--body);font-size:.85rem;color:var(--fg-dim);line-height:1.5;}
+  .disclaimer{background:rgba(200,181,96,.05);border:1px solid rgba(200,181,96,.15);border-radius:4px;
+    padding:.75rem 1rem;font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);
+    letter-spacing:.06em;margin-top:1.5rem;line-height:1.7;}
+  footer{text-align:center;padding:2rem 1rem;font-family:var(--mono);font-size:.6rem;
+    color:var(--fg-dim);letter-spacing:.1em;border-top:1px solid var(--border);margin-top:2rem;}
+  @media(max-width:600px){
+    header{height:auto;min-height:64px;padding:.6rem 1rem;gap:.75rem;flex-wrap:wrap;}
+    .he img{height:44px;width:44px;}
+    .ht h1{font-size:1.35rem;letter-spacing:.08em;}
+    .ht p{font-size:.7rem;margin-top:2px;}
+    .ht .made{display:none;}
+    .hb{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="he"><img src="assets/icon.png" alt="Unit Tools"></div>
+  <div class="ht">
+    <h1>UNIT TOOLS</h1>
+    <p>DRIVER'S TRAINING ADMIN TOOLKIT</p>
+    <p class="made">MADE BY: SGT SONNIER, JOHN (WIP)</p>
+  </div>
+  <div class="hb" id="clock"></div>
+</header>
+<div class="back-bar">
+  <a class="back-btn" href="index.html">← BACK</a>
+  <span class="back-sep">//</span>
+  <span class="back-cur">TEMPLATES &amp; GUIDES</span>
+</div>
+<main>
+  <div class="eyebrow">SELECT A TEMPLATE OR GUIDE</div>
+
+  <div class="grid">
+    <a class="card" href="troop-info-template.html">
+      <span class="badge">ACTIVE</span>
+      <span class="icon">📋</span>
+      <div class="title">Troop Info File</div>
+      <div class="desc">Download a blank Troop Info template, or add soldiers and download an updated file — with or without an existing roster loaded.</div>
+    </a>
+  </div>
+
+  <div class="disclaimer">
+    ⚠ More templates and how-to guides will be added here over time. All files are generated locally in your browser — no data is transmitted to any server.
+  </div>
+</main>
+<footer>DRIVER'S TRAINING ADMIN TOOLKIT // ALL PROCESSING IS LOCAL — NO DATA LEAVES YOUR DEVICE // CURIOUS ON HOW IT WORKS? - https://github.com/Dispatcher21/Sonnier-DT-Tool</footer>
+<script src="js/core.js"></script>
+<script>
+startClock('clock');
+</script>
+</body>
+</html>

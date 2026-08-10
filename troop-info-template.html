@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DT Helper">
+<meta name="theme-color" content="#4B5320">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<title>Troop Info Template // UNIT TOOLS</title>
+
+<script src="js/libs/xlsx-js-style.min.js"></script>
+<style>
+  :root{
+    --green:#4B5320;--green-lt:#6B7A32;--tan:#C8B560;--tan-lt:#DDD090;
+    --dark:#1A1F0E;--darker:#0F1208;--fg:#E8E4D0;--fg-dim:#9A9680;
+    --red:#CC2200;--ok:#5A8A30;--orange:#CC6600;
+    --panel:#222810;--border:#3A4018;
+    --mono:'Courier New',Courier,monospace;--cond:Arial Narrow,Arial,sans-serif;--body:Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--darker);color:var(--fg);font-family:var(--body);min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(74,83,32,.03) 2px,rgba(74,83,32,.03) 4px);}
+  header{background:var(--green);border-bottom:3px solid var(--tan);padding:0 2rem;
+    display:flex;align-items:center;gap:1.25rem;height:96px;position:sticky;top:0;z-index:100;}
+  .he img{height:68px;width:68px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}
+  .ht h1{font-family:var(--cond);font-size:1.95rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1;}
+  .ht p{font-family:var(--mono);font-size:.85rem;color:var(--tan-lt);letter-spacing:.08em;margin-top:4px;}
+  .ht .made{font-size:.55rem;color:var(--tan-lt);letter-spacing:.06em;margin-top:2px;opacity:.7;}
+  .hb{margin-left:auto;font-family:var(--mono);font-size:.85rem;color:var(--tan);text-align:right;line-height:1.6;white-space:pre;}
+  .back-bar{background:var(--dark);border-bottom:1px solid var(--border);padding:.5rem 1.5rem;display:flex;align-items:center;gap:.75rem;}
+  .back-btn{font-family:var(--mono);font-size:.75rem;color:var(--tan);text-decoration:none;}
+  .back-btn:hover{color:var(--tan-lt);}
+  .back-sep,.back-cur{font-family:var(--mono);font-size:.75rem;color:var(--fg-dim);}
+  main{max-width:900px;margin:0 auto;padding:2rem 1rem;}
+
+  .step{background:var(--panel);border:1px solid var(--border);border-radius:4px;margin-bottom:1.25rem;overflow:hidden;}
+  .step-header{background:var(--green);padding:.7rem 1rem;display:flex;align-items:center;gap:.75rem;}
+  .step-num{font-family:var(--mono);font-size:.7rem;color:var(--tan);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:2px;letter-spacing:.08em;}
+  .step-header h2{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
+  .step-tag{margin-left:auto;font-family:var(--mono);font-size:.6rem;color:var(--tan);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:2px;}
+  .step-body{padding:1.25rem;}
+  .step-desc{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);line-height:1.6;margin-bottom:.9rem;}
+
+  .uz{border:2px dashed var(--border);border-radius:4px;padding:1.25rem 1rem;text-align:center;
+    cursor:pointer;transition:all .2s;position:relative;background:rgba(0,0,0,.2);}
+  .uz:hover{border-color:var(--tan);}
+  .uz.has{border-color:var(--ok);border-style:solid;background:rgba(90,138,48,.08);}
+  .uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .uz .uz-icon{font-size:1.75rem;margin-bottom:.4rem;display:block;}
+  .uz .uz-lbl{font-family:var(--cond);font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg);display:block;margin-bottom:.2rem;}
+  .uz .uz-hint{font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);}
+  .uz .uz-fname{display:none;font-family:var(--mono);font-size:.65rem;color:var(--ok);margin-top:.3rem;word-break:break-all;}
+  .uz.has .uz-fname{display:block;}
+  .uz.has .uz-hint{display:none;}
+
+  .loaded-bar{background:rgba(90,138,48,.1);border:1px solid rgba(90,138,48,.3);border-radius:4px;
+    padding:.6rem .9rem;display:none;align-items:center;gap:.75rem;margin-top:.75rem;flex-wrap:wrap;}
+  .loaded-bar.show{display:flex;}
+  .loaded-info{font-family:var(--mono);font-size:.68rem;color:#88CC44;flex:1;}
+  .loaded-info strong{color:var(--fg);}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr 1.4fr auto auto;gap:.6rem;align-items:flex-end;}
+  @media(max-width:750px){.form-grid{grid-template-columns:1fr 1fr;}}
+  .field{display:flex;flex-direction:column;gap:.3rem;}
+  .field label{font-family:var(--cond);font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-dim);}
+  .field input,.field select{background:var(--darker);border:1px solid var(--border);border-radius:3px;
+    color:var(--fg);font-family:var(--mono);font-size:.8rem;padding:.4rem .55rem;outline:none;width:100%;}
+  .field input:focus,.field select:focus{border-color:var(--tan);}
+  .field-check{display:flex;align-items:center;gap:.4rem;padding-bottom:.5rem;}
+  .field-check input{accent-color:var(--red);width:16px;height:16px;}
+  .field-check label{font-family:var(--cond);font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);cursor:pointer;}
+
+  .added-list{margin-top:.9rem;}
+  .added-empty{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);padding:.5rem 0;}
+  .added-tag{display:inline-flex;align-items:center;gap:.5rem;background:rgba(90,138,48,.15);border:1px solid rgba(90,138,48,.3);
+    border-radius:3px;padding:4px 10px;margin:.2rem .3rem .2rem 0;font-family:var(--mono);font-size:.68rem;color:#c9e8b4;}
+  .added-tag.susp{background:rgba(204,34,0,.12);border-color:rgba(204,34,0,.35);color:#FF9988;}
+  .added-tag button{background:none;border:none;color:var(--red);cursor:pointer;font-size:.75rem;padding:0;line-height:1;}
+
+  .btn{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+    padding:.75rem 2rem;border:none;border-radius:3px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem;}
+  .btn-primary{background:var(--ok);color:#fff;border:2px solid #6AAA38;width:100%;justify-content:center;font-size:1.1rem;}
+  .btn-primary:hover:not(:disabled){background:#6AAA38;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-sm-ok{background:var(--ok);color:#fff;border:none;font-size:.75rem;
+    padding:.45rem 1rem;font-family:var(--cond);font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+  .btn-sm{background:var(--dark);color:var(--fg-dim);border:1px solid var(--border);font-size:.75rem;
+    padding:.3rem .75rem;font-family:var(--cond);font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;}
+  .btn-sm:hover{border-color:var(--red);color:var(--red);}
+  .btn-dl{background:var(--dark);color:var(--tan);border:2px solid var(--tan);text-decoration:none;
+    display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+    padding:.6rem 1.5rem;font-family:var(--cond);font-size:.95rem;font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;border-radius:3px;margin:.25rem;cursor:pointer;}
+  .btn-dl:hover{background:var(--tan);color:var(--dark);}
+
+  .summary{font-family:var(--mono);font-size:.72rem;color:var(--fg-dim);margin-bottom:.9rem;line-height:1.7;}
+  .summary strong{color:var(--fg);}
+  .err{background:rgba(204,34,0,.1);border:1px solid #CC2200;border-radius:4px;
+    padding:.75rem 1rem;font-family:var(--mono);font-size:.8rem;color:#FF6655;margin:.75rem 0;}
+  .hidden{display:none!important;}
+
+  @media(max-width:600px){
+    header{height:auto;min-height:64px;padding:.6rem 1rem;gap:.75rem;flex-wrap:wrap;}
+    .he img{height:44px;width:44px;}
+    .ht h1{font-size:1.35rem;letter-spacing:.08em;}
+    .ht p{font-size:.7rem;margin-top:2px;}
+    .ht .made{display:none;}
+    .hb{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="he"><img src="assets/icon.png" alt="Unit Tools"></div>
+  <div class="ht">
+    <h1>UNIT TOOLS</h1>
+    <p>DRIVER'S TRAINING ADMIN TOOLKIT</p>
+    <p class="made">MADE BY: SGT SONNIER, JOHN (WIP)</p>
+  </div>
+  <div class="hb" id="clock"></div>
+</header>
+<div class="back-bar">
+  <a class="back-btn" href="templates.html">← BACK</a>
+  <span class="back-sep">//</span>
+  <span class="back-cur">TROOP INFO FILE</span>
+</div>
+<main>
+
+  <!-- STEP 1: Blank Template -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 1</span>
+      <h2>Download a Blank Template</h2>
+      <span class="step-tag">OPTIONAL</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Starting a Troop Info file from nothing? Download an empty file with the correct headers already in place, then fill it in yourself in Excel.</div>
+      <button class="btn-dl" onclick="downloadBlank()">⬇ DOWNLOAD BLANK TEMPLATE</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Load existing -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <h2>Load Your Existing Roster</h2>
+      <span class="step-tag">OPTIONAL</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Already maintaining a Troop Info file? Load it here so the soldiers you add below get appended to it instead of replacing it. Skip this if you're building a new file from scratch.</div>
+      <div class="uz" id="uz-troop">
+        <input type="file" id="f-troop" accept=".xlsx,.xls" onchange="loadExisting()">
+        <span class="uz-icon">📋</span>
+        <span class="uz-lbl">Upload Existing Troop Info File</span>
+        <span class="uz-hint">Your current .xlsx roster</span>
+        <span class="uz-fname" id="fn-troop"></span>
+      </div>
+      <div class="loaded-bar" id="loaded-bar">
+        <div class="loaded-info" id="loaded-info"></div>
+        <button class="btn-sm" onclick="clearExisting()">✕ CLEAR</button>
+      </div>
+      <div id="err-load" class="err hidden"></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Add soldiers -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <h2>Add Soldiers</h2>
+      <span class="step-tag" id="added-tag">0 ADDED</span>
+    </div>
+    <div class="step-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>Platoon</label>
+          <select id="a-platoon">
+            <option value="">— SELECT —</option>
+            <option>HQ</option><option>1ST</option><option>2ND</option><option>SUPPORT</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Rank</label>
+          <select id="a-rank">
+            <option value="">— SELECT —</option>
+            <option>PVT</option><option>PV2</option><option>PFC</option><option>SPC</option><option>CPL</option>
+            <option>SGT</option><option>SSG</option><option>SFC</option><option>MSG</option><option>1SG</option>
+            <option>SGM</option><option>CSM</option><option>WO1</option><option>WO2</option><option>WO3</option>
+            <option>WO4</option><option>WO5</option><option>2LT</option><option>1LT</option><option>CPT</option>
+            <option>MAJ</option><option>LTC</option><option>COL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="a-last" placeholder="LAST NAME" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="a-first" placeholder="FIRST NAME" style="text-transform:uppercase">
+        </div>
+        <div class="field-check">
+          <input type="checkbox" id="a-suspended">
+          <label for="a-suspended">Suspended</label>
+        </div>
+        <div>
+          <button class="btn-sm-ok" onclick="addSoldier()">+ ADD</button>
+        </div>
+      </div>
+
+      <div class="added-list" id="added-list">
+        <div class="added-empty">No soldiers added yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Download -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 4</span>
+      <h2>Download</h2>
+    </div>
+    <div class="step-body">
+      <div class="summary" id="summary">0 existing + 0 new = 0 total soldiers</div>
+      <div id="err-dl" class="err hidden"></div>
+      <button class="btn btn-primary" id="btn-dl" onclick="downloadUpdated()" disabled>⬇ DOWNLOAD TROOP INFO FILE</button>
+    </div>
+  </div>
+
+</main>
+<script src="js/core.js"></script>
+<script>
+startClock('clock');
+
+let existingTroop = {};   // fullName -> {platoon,rank,last,first,suspended}, loaded from Step 2
+let addedSoldiers = [];   // [{platoon,rank,last,first,suspended}] from Step 3
+
+// ── Excel styling (mirrors the styled exports elsewhere in the app) ──
+function xls_hdr()  { return { font:{bold:true,sz:10,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'4B5320'},patternType:'solid'}, alignment:{horizontal:'center',vertical:'center',wrapText:true} }; }
+function xls_title(){ return { font:{bold:true,sz:12,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'2B3A1A'},patternType:'solid'}, alignment:{horizontal:'center',vertical:'center'} }; }
+function xls_data(alt){ return { font:{sz:9}, fill:{fgColor:{rgb: alt ? 'F2F5EE' : 'FFFFFF'},patternType:'solid'}, alignment:{horizontal:'left',vertical:'center'} }; }
+function xls_susp(val, alt) {
+  return { font:{bold:!!val,sz:9,color:{rgb: val?'CC2200':'000000'}}, fill:{fgColor:{rgb: alt?'F2F5EE':'FFFFFF'},patternType:'solid'}, alignment:{horizontal:'center',vertical:'center'} };
+}
+function xlsCell(v, style) { return { v, s: style, t: typeof v === 'number' ? 'n' : 's' }; }
+
+function buildTroopInfoBlob(entries) {
+  const wb  = XLSX.utils.book_new();
+  const aoa = [
+    [xlsCell('TROOP INFO — PLATOON / ORG CHART (MANUALLY MAINTAINED)', xls_title()),'','','','',''],
+    [xlsCell('PLATOON',xls_hdr()),xlsCell('RANK',xls_hdr()),xlsCell('LAST NAME',xls_hdr()),
+     xlsCell('FIRST NAME',xls_hdr()),xlsCell('FULL NAME',xls_hdr()),xlsCell('SUSPENDED',xls_hdr())],
+  ];
+  entries.forEach((e, i) => {
+    const alt = i % 2 === 0;
+    aoa.push([
+      xlsCell(e.platoon || '', xls_data(alt)),
+      xlsCell(e.rank    || '', xls_data(alt)),
+      xlsCell(e.last    || '', xls_data(alt)),
+      xlsCell(e.first   || '', xls_data(alt)),
+      xlsCell(normalizeName(`${e.first || ''} ${e.last || ''}`), xls_data(alt)),
+      xlsCell(e.suspended ? 'Y' : '', xls_susp(e.suspended, alt)),
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellStyles: true });
+  ws['!cols']  = [10,8,18,16,24,12].map(w => ({ wch: w }));
+  ws['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:5} }];
+  ws['!rows']  = [{ hpt: 22 }, { hpt: 20 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'TROOP INFO');
+  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+// ── Step 1: blank template ──────────────────────────────────────────
+function downloadBlank() {
+  triggerDownload(buildTroopInfoBlob([]), `TROOP_INFO_BLANK_${dateStamp()}.xlsx`);
+}
+
+// ── Step 2: load existing ─────────────────────────────────────────────
+function loadExisting() {
+  const input = document.getElementById('f-troop');
+  if (!input.files.length) return;
+  const file = input.files[0];
+  showErr('err-load', null);
+  workbookFromFile(file).then(wb => {
+    existingTroop = parseTroopInfo(wb);
+    const count = Object.keys(existingTroop).length;
+    if (!count) {
+      showErr('err-load', 'No soldiers found in that file — check it has a TROOP INFO sheet with PLATOON/RANK headers.');
+      existingTroop = {};
+      return;
+    }
+    document.getElementById('uz-troop').classList.add('has');
+    document.getElementById('fn-troop').textContent = file.name;
+    const bar = document.getElementById('loaded-bar');
+    bar.classList.add('show');
+    document.getElementById('loaded-info').innerHTML =
+      `✓ LOADED: <strong>${count} soldiers</strong> from ${file.name}`;
+    updateSummary();
+  }).catch(e => showErr('err-load', 'Error reading file: ' + e.message));
+}
+
+function clearExisting() {
+  existingTroop = {};
+  document.getElementById('uz-troop').classList.remove('has');
+  document.getElementById('fn-troop').textContent = '';
+  document.getElementById('f-troop').value = '';
+  document.getElementById('loaded-bar').classList.remove('show');
+  updateSummary();
+}
+
+// ── Step 3: add soldiers ──────────────────────────────────────────────
+function addSoldier() {
+  const platoon   = document.getElementById('a-platoon').value;
+  const rank      = document.getElementById('a-rank').value;
+  const last      = document.getElementById('a-last').value.trim().toUpperCase();
+  const first     = document.getElementById('a-first').value.trim().toUpperCase();
+  const suspended = document.getElementById('a-suspended').checked;
+
+  if (!last || !first) { alert('Enter both a last name and first name.'); return; }
+
+  addedSoldiers.push({ platoon, rank, last, first, suspended });
+
+  document.getElementById('a-last').value = '';
+  document.getElementById('a-first').value = '';
+  document.getElementById('a-suspended').checked = false;
+
+  renderAdded();
+  updateSummary();
+}
+
+function removeSoldier(idx) {
+  addedSoldiers.splice(idx, 1);
+  renderAdded();
+  updateSummary();
+}
+
+function renderAdded() {
+  const el = document.getElementById('added-list');
+  document.getElementById('added-tag').textContent = `${addedSoldiers.length} ADDED`;
+  if (!addedSoldiers.length) {
+    el.innerHTML = '<div class="added-empty">No soldiers added yet.</div>';
+    return;
+  }
+  el.innerHTML = addedSoldiers.map((s, i) => `
+    <span class="added-tag ${s.suspended ? 'susp' : ''}">
+      ${s.platoon || '—'} ${s.rank || ''} ${s.last}, ${s.first}${s.suspended ? ' ⚠ SUSPENDED' : ''}
+      <button onclick="removeSoldier(${i})">✕</button>
+    </span>`).join('');
+}
+
+// ── Step 4: download merged file ──────────────────────────────────────
+function collectAllEntries() {
+  const merged = {};
+  for (const [name, info] of Object.entries(existingTroop)) merged[name] = { ...info };
+  for (const s of addedSoldiers) {
+    const fullName = normalizeName(`${s.first} ${s.last}`);
+    merged[fullName] = { platoon: s.platoon, rank: s.rank, last: s.last, first: s.first, suspended: s.suspended };
+  }
+  return Object.values(merged).sort((a, b) =>
+    a.last.localeCompare(b.last) || a.first.localeCompare(b.first));
+}
+
+function updateSummary() {
+  const existingCount = Object.keys(existingTroop).length;
+  const addedCount    = addedSoldiers.length;
+  const total         = collectAllEntries().length;
+  document.getElementById('summary').innerHTML =
+    `<strong>${existingCount}</strong> existing + <strong>${addedCount}</strong> new = <strong>${total}</strong> total soldiers` +
+    (existingCount && addedCount && (existingCount + addedCount) !== total
+      ? ' <span style="color:var(--orange)">(some new entries matched existing names and replaced them)</span>' : '');
+  document.getElementById('btn-dl').disabled = total === 0;
+}
+
+function downloadUpdated() {
+  showErr('err-dl', null);
+  const entries = collectAllEntries();
+  if (!entries.length) { showErr('err-dl', 'Nothing to download — load an existing file or add at least one soldier.'); return; }
+  triggerDownload(buildTroopInfoBlob(entries), `TROOP_INFO_${dateStamp()}.xlsx`);
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!msg) { el.classList.add('hidden'); return; }
+  el.textContent = '⚠ ' + msg;
+  el.classList.remove('hidden');
+}
+
+renderAdded();
+updateSummary();
+</script>
+</body>
+</html>
