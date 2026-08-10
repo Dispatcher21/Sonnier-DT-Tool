@@ -512,15 +512,42 @@ function parseTroopInfo(workbook) {
   const ws = workbook.Sheets[sheetName];
   const raw = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null });
 
+  // Locate the header row by label rather than assuming it's row 0 — some
+  // sheets have a title row above the real column headers.
+  let headerIdx = raw.findIndex(row =>
+    Array.isArray(row) &&
+    row.some(c => c && String(c).trim().toUpperCase() === 'PLATOON') &&
+    row.some(c => c && String(c).trim().toUpperCase() === 'RANK')
+  );
+  if (headerIdx === -1) headerIdx = 0;
+  const header = raw[headerIdx] || [];
+
+  // Resolve columns by header label so a reordered/inserted column (e.g. a
+  // "FULL NAME" column) doesn't silently shift everything after it.
+  const findCol = (labels, fallback) => {
+    for (let i = 0; i < header.length; i++) {
+      const h = header[i] ? String(header[i]).trim().toUpperCase() : '';
+      if (labels.includes(h)) return i;
+    }
+    return fallback;
+  };
+  const cPlatoon   = findCol(['PLATOON'], 0);
+  const cRank      = findCol(['RANK'], 1);
+  const cLast      = findCol(['LAST NAME', 'LAST'], 2);
+  const cFirst     = findCol(['FIRST NAME', 'FIRST'], 3);
+  const cSuspended = findCol(['SUSPENDED', 'SUSPENDED LICENSE', 'SUSPENDED LICENSES'], -1);
+
   const troops = {};
-  for (let i = 1; i < raw.length; i++) {
+  for (let i = headerIdx + 1; i < raw.length; i++) {
     const row = raw[i];
-    if (!row[0]) continue;
-    const platoon   = row[0] ? String(row[0]).trim().toUpperCase() : '';
-    const rank      = row[1] ? String(row[1]).trim() : '';
-    const last      = row[2] ? String(row[2]).trim().toUpperCase() : '';
-    const first     = row[3] ? String(row[3]).trim().toUpperCase() : '';
-    const suspended = row[4] ? /^Y(ES)?$/i.test(String(row[4]).trim()) : false;
+    if (!row || !row[cPlatoon]) continue;
+    const platoon   = String(row[cPlatoon]).trim().toUpperCase();
+    const rank      = row[cRank]  ? String(row[cRank]).trim() : '';
+    const last      = row[cLast]  ? String(row[cLast]).trim().toUpperCase() : '';
+    const first     = row[cFirst] ? String(row[cFirst]).trim().toUpperCase() : '';
+    const suspended = (cSuspended !== -1 && row[cSuspended])
+      ? /^Y(ES)?$/i.test(String(row[cSuspended]).trim())
+      : false;
     const fullName = normalizeName(`${first} ${last}`);
     if (fullName.trim()) {
       troops[fullName] = { platoon, rank, last, first, suspended };
