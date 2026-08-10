@@ -587,6 +587,30 @@ function updateGenBtn() {
   });
 }
 
+// ── Email Roster (mailto — no server, no attachment) ─────────────────
+let lastSession = null; // {examiner, vehicle, route, dateStr, soldiers, doWritten, doRoad}
+
+function buildRosterEmailBody(s) {
+  const lines = [];
+  lines.push('DRIVER TESTING SESSION ROSTER');
+  lines.push(`Date: ${s.dateStr}`);
+  lines.push(`Examiner: ${s.examiner}`);
+  lines.push(`Vehicle: ${s.vehicle}`);
+  if (s.route) lines.push(`Route: ${s.route}`);
+  lines.push(`Documents: ${s.doWritten && s.doRoad ? 'Written Exam + DA 6125 Road Test' : s.doWritten ? 'Written Exam' : 'DA 6125 Road Test'}`);
+  lines.push('');
+  lines.push(`Soldiers Tested (${s.soldiers.length}):`);
+  s.soldiers.forEach((sol, i) => lines.push(`${i+1}. ${sol.rank ? sol.rank+' ' : ''}${sol.displayName}`));
+  return lines.join('\n');
+}
+
+function emailRoster() {
+  if (!lastSession) return;
+  const subject = `Driver Testing Roster — ${lastSession.vehicle} — ${lastSession.dateStr}`;
+  const body    = buildRosterEmailBody(lastSession);
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 // ── Generate ───────────────────────────────────────────────────────
 async function generate() {
   const examiner = document.getElementById('examiner').value.trim().toUpperCase();
@@ -625,6 +649,8 @@ async function generate() {
 
   const dateStr = new Date(dateVal + 'T12:00:00')
     .toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+  lastSession = { examiner, vehicle, route, dateStr, soldiers: allSoldiers, doWritten, doRoad };
 
   const spin = document.getElementById('spin-gen');
   spin.style.display = 'flex';
@@ -676,6 +702,12 @@ async function generate() {
       btnPdf.onclick = () => triggerDownload(mergedBlob, `TestingSession_${dateStamp()}.pdf`);
       row.appendChild(btnPdf);
 
+      const btnEmail1 = document.createElement('button');
+      btnEmail1.className = 'btn-dl';
+      btnEmail1.textContent = `✉ EMAIL ROSTER`;
+      btnEmail1.onclick = emailRoster;
+      row.appendChild(btnEmail1);
+
     } else if (doWritten) {
       document.getElementById('spin-msg').textContent = 'GENERATING ANSWER SHEETS...';
       const blob = buildAnswerSheetsPDF(names, examiner, vehicle, dateStr, sessionKey);
@@ -686,6 +718,12 @@ async function generate() {
       btn.textContent = `📄 DOWNLOAD ANSWER SHEETS`;
       btn.onclick = () => triggerDownload(blob, `AnswerSheets_${dateStamp()}.pdf`);
       row.appendChild(btn);
+
+      const btnEmail2 = document.createElement('button');
+      btnEmail2.className = 'btn-dl';
+      btnEmail2.textContent = `✉ EMAIL ROSTER`;
+      btnEmail2.onclick = emailRoster;
+      row.appendChild(btnEmail2);
 
     } else {
       document.getElementById('spin-msg').textContent = 'GENERATING DA 6125s...';
@@ -699,6 +737,12 @@ async function generate() {
       btn.textContent = `📄 DOWNLOAD DA 6125 (${allSoldiers.length} SOLDIERS)`;
       btn.onclick = () => triggerDownload(blob, `DA6125_${dateStamp()}.pdf`);
       row.appendChild(btn);
+
+      const btnEmail3 = document.createElement('button');
+      btnEmail3.className = 'btn-dl';
+      btnEmail3.textContent = `✉ EMAIL ROSTER`;
+      btnEmail3.onclick = emailRoster;
+      row.appendChild(btnEmail3);
     }
 
     document.getElementById('dl-success').textContent =
