@@ -48,6 +48,7 @@
   .step-header h2{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
   .step-tag{margin-left:auto;font-family:var(--mono);font-size:.6rem;color:var(--tan);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:2px;}
   .step-body{padding:1.25rem;}
+  .step-desc{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);line-height:1.6;margin-bottom:.9rem;}
 
   /* Upload zone */
   .uz{border:2px dashed var(--border);border-radius:4px;padding:1.25rem 1rem;text-align:center;
@@ -120,6 +121,18 @@
   .check-option .co-desc{font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);margin-top:1px;}
   .check-option.disabled .co-desc{color:#FF8833;}
 
+  /* Cart */
+  .cart-item{background:rgba(0,0,0,.15);border:1px solid var(--border);border-radius:4px;padding:.75rem;margin-bottom:.6rem;}
+  .cart-item-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+  .cart-item-num{font-family:var(--cond);font-size:.7rem;font-weight:800;letter-spacing:.08em;color:var(--tan);background:rgba(200,181,96,.15);padding:2px 8px;border-radius:2px;}
+  .cart-item-vehicle{font-family:var(--cond);font-size:.9rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg);}
+  .badge-out{font-family:var(--mono);font-size:.55rem;font-weight:700;color:#88CC44;background:rgba(90,138,48,.2);
+    border:1px solid rgba(90,138,48,.4);padding:2px 6px;border-radius:2px;letter-spacing:.06em;}
+  .cart-item-head .btn-sm{margin-left:auto;}
+  .cart-item-details{font-family:var(--mono);font-size:.65rem;color:var(--fg-dim);margin-top:.4rem;}
+  .cart-item-soldiers{font-family:var(--mono);font-size:.65rem;color:var(--tan);margin-top:.3rem;line-height:1.5;}
+  .cart-empty{font-family:var(--mono);font-size:.7rem;color:var(--fg-dim);text-align:center;padding:1rem;border:1px dashed var(--border);border-radius:4px;}
+
   /* Buttons */
   .btn{font-family:var(--cond);font-size:1rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
     padding:.75rem 2rem;border:none;border-radius:3px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem;}
@@ -138,6 +151,7 @@
   .btn-dl:hover{background:var(--tan);color:var(--dark);}
   .btn-link{background:none;border:none;color:var(--tan);font-family:var(--mono);font-size:.65rem;cursor:pointer;text-decoration:underline;padding:0;}
   .btn-link:hover{color:var(--tan-lt);}
+  a.btn-link{text-decoration:none;}
 
   /* Status */
   .warn{background:rgba(200,181,96,.08);border:1px solid rgba(200,181,96,.25);border-radius:4px;
@@ -180,12 +194,12 @@
 </div>
 <main>
 
-  <!-- STEP 1: Soldiers -->
+  <!-- STEP 1: Soldier Pool -->
   <div class="step">
     <div class="step-header">
       <span class="step-num">STEP 1</span>
-      <h2>Select Soldiers</h2>
-      <span class="step-tag" id="step1-tag">0 SELECTED</span>
+      <h2>Load Soldier Pool</h2>
+      <span class="step-tag" id="step1-tag">0 IN POOL</span>
     </div>
     <div class="step-body">
 
@@ -194,11 +208,51 @@
         <input type="file" id="f-troop" accept=".xlsx,.xls" onchange="loadTroop()">
         <span class="uz-icon">📋</span>
         <span class="uz-lbl">Upload Troop Info File</span>
-        <span class="uz-hint">Optional — load your roster to select soldiers from a list</span>
+        <span class="uz-hint">Optional — load your roster so soldiers are available to pick from in Step 2</span>
         <span class="uz-fname" id="fn-troop"></span>
       </div>
 
-      <!-- Filters (hidden until troop loaded) -->
+      <!-- Add soldier manually -->
+      <div class="add-manual" id="add-manual-section">
+        <div class="add-manual-header" onclick="toggleManualAdd()">
+          <span id="manual-toggle-icon">▶</span>
+          <span>ADD SOLDIER NOT ON ROSTER</span>
+        </div>
+        <div class="add-manual-fields" id="manual-fields">
+          <div class="field">
+            <label>Name</label>
+            <input type="text" id="m-name" placeholder="LAST, FIRST" style="text-transform:uppercase">
+          </div>
+          <div class="field">
+            <label>Rank</label>
+            <select id="m-rank">
+             <option value="">— ALL —</option>
+              <option>PVT</option><option>PV2</option><option>PFC</option><option>SPC</option><option>CPL</option><option>SGT</option><option>SSG</option><option>SFC</option><option>MSG</option><option>1SG</option><option>SGM</option><option>CSM</option>
+              <option>W01</option><option>CW2</option><option>CW3</option><option>CW4</option><option>CW5</option>
+              <option>2LT</option><option>1LT</option><option>CPT</option><option>MAJ</option><option>LTC</option><option>COL</option><option>BG</option><option>MG</option><option>LTG</option><option>GEN</option><option>GA</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn-sm-ok" onclick="addManualSoldier()">+ ADD</button>
+          </div>
+        </div>
+        <div id="manual-added-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STEP 2: Build Testing Groups -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <h2>Build Testing Groups</h2>
+      <span class="step-tag" id="cart-tag">0 GROUPS</span>
+    </div>
+    <div class="step-body">
+      <div class="step-desc">Pick the soldiers, session details, and outputs for one testing group, then add it to the cart below. Repeat for each vehicle or soldier group in this roster sweep, then generate everything at once in Step 3.</div>
+
+      <!-- Roster picker (hidden until troop loaded) -->
       <div id="filter-section" class="hidden">
         <div class="filter-row">
           <div class="filter-box">
@@ -226,48 +280,15 @@
         <div class="soldier-list" id="soldier-list">
           <div class="empty-list">No soldiers loaded.</div>
         </div>
-        <div class="sel-count" id="sel-count">0 soldiers selected</div>
       </div>
 
-      <!-- Add soldier manually -->
-      <div class="add-manual" id="add-manual-section">
-        <div class="add-manual-header" onclick="toggleManualAdd()">
-          <span id="manual-toggle-icon">▶</span>
-          <span>ADD SOLDIER NOT ON ROSTER</span>
-        </div>
-        <div class="add-manual-fields" id="manual-fields">
-          <div class="field">
-            <label>Name</label>
-            <input type="text" id="m-name" placeholder="LAST, FIRST" style="text-transform:uppercase">
-          </div>
-          <div class="field">
-            <label>Rank</label>
-            <select id="m-rank">
-             <option value="">— ALL —</option>
-              <option>PVT</option><option>PV2</option><option>PFC</option><option>SPC</option><option>CPL</option><option>SGT</option><option>SSG</option><option>SFC</option><option>MSG</option><option>1SG</option><option>SGM</option><option>CSM</option>
-              <option>W01</option><option>CW2</option><option>CW3</option><option>CW4</option><option>CW5</option>
-              <option>2LT</option><option>1LT</option><option>CPT</option><option>MAJ</option><option>LTC</option><option>COL</option><option>BG</option><option>MG</option><option>LTG</option><option>GEN</option><option>GA</option>
-            </select>
-            </select>
-          </div>
-          <div style="display:flex;align-items:flex-end;">
-            <button class="btn-sm-ok" onclick="addManualSoldier()">+ ADD</button>
-          </div>
-        </div>
-        <div id="manual-added-list"></div>
-      </div>
+      <!-- Manual-soldier picker (shown whenever the pool has manual adds) -->
+      <div id="manual-picker-section"></div>
 
-    </div>
-  </div>
+      <div class="sel-count" id="sel-count">0 soldiers selected for this group</div>
 
-  <!-- STEP 2: Session Details -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">STEP 2</span>
-      <h2>Session Details</h2>
-    </div>
-    <div class="step-body">
-      <div class="form-grid">
+      <!-- Group details -->
+      <div class="form-grid" style="margin-top:1rem;">
         <div class="field">
           <label>Examiner Name</label>
           <input type="text" id="examiner" placeholder="SGT SMITH, JOHN" style="text-transform:uppercase">
@@ -285,52 +306,15 @@
           <input type="text" id="route" placeholder="e.g. POST ROUTE A" style="text-transform:uppercase">
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- STEP 3: Answer Key -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">STEP 3</span>
-      <h2>Written Test Answer Key</h2>
-      <span class="step-tag">OPTIONAL</span>
-    </div>
-    <div class="step-body">
-      <div class="warn">⚠ AR 600-55 Para 5-4: Answer keys must be secured. Examiner use only — do not share with soldiers being tested.</div>
-
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
-        <span style="font-family:var(--mono);font-size:.65rem;color:var(--fg-dim);">Upload an Excel file with questions in column A and answers in column B.</span>
-        <button class="btn-link" onclick="downloadKeyTemplate()">⬇ DOWNLOAD TEMPLATE</button>
-      </div>
-
-      <div class="uz" id="uz-key">
-        <input type="file" id="f-key" accept=".xlsx,.xls" onchange="loadAnswerKey()">
-        <span class="uz-icon">📊</span>
-        <span class="uz-lbl">Upload Answer Key (Excel)</span>
-        <span class="uz-hint">Column A: Question # &nbsp;|&nbsp; Column B: Answer (A/B/C/D or TRUE/FALSE)</span>
-        <span class="uz-fname" id="fn-key"></span>
-      </div>
-
-      <div id="key-preview" class="key-preview hidden"></div>
-    </div>
-  </div>
-
-  <!-- STEP 4: Generate -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">STEP 4</span>
-      <h2>Generate Documents</h2>
-    </div>
-    <div class="step-body">
-
-      <div style="font-family:var(--cond);font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:.75rem;">SELECT WHAT TO GENERATE</div>
-
+      <!-- Output type -->
+      <div style="font-family:var(--cond);font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-dim);margin:1rem 0 .5rem;">WHAT DOES THIS GROUP NEED?</div>
       <div class="output-options">
         <label class="check-option disabled" id="opt-written" for="chk-written">
           <input type="checkbox" id="chk-written" disabled onchange="updateGenBtn()">
           <div>
             <div class="co-label">📝 Written Test Answer Sheets</div>
-            <div class="co-desc" id="written-desc">Upload an answer key in Step 3 to enable</div>
+            <div class="co-desc" id="written-desc">Upload an answer key below to enable</div>
           </div>
         </label>
         <label class="check-option" id="opt-road" for="chk-road">
@@ -342,8 +326,41 @@
         </label>
       </div>
 
-      <div style="font-family:var(--mono);font-size:.65rem;color:var(--fg-dim);margin-top:.6rem;">
-        When both are selected, output is a ZIP file containing all documents.
+      <!-- Answer key -->
+      <div class="warn" style="margin-top:1rem;">⚠ AR 600-55 Para 5-4: Answer keys must be secured. Examiner use only — do not share with soldiers being tested.</div>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:.65rem;color:var(--fg-dim);">This group's written-test key (Excel: questions in column A, answers in column B).</span>
+        <button class="btn-link" onclick="downloadKeyTemplate()">⬇ DOWNLOAD TEMPLATE</button>
+        <a class="btn-link" href="answer-key-template.html" target="_blank">BUILD A CUSTOM KEY →</a>
+      </div>
+      <div class="uz" id="uz-key">
+        <input type="file" id="f-key" accept=".xlsx,.xls" onchange="loadGroupAnswerKey()">
+        <span class="uz-icon">📊</span>
+        <span class="uz-lbl">Upload Answer Key (Excel)</span>
+        <span class="uz-hint">Column A: Question # &nbsp;|&nbsp; Column B: Answer (A/B/C/D or TRUE/FALSE)</span>
+        <span class="uz-fname" id="fn-key"></span>
+      </div>
+      <div id="key-preview" class="key-preview hidden"></div>
+
+      <div id="err-group" class="err hidden" style="margin-top:.75rem;"></div>
+      <button class="btn-sm-ok" onclick="addGroupToCart()" style="margin-top:1rem;padding:.6rem 1.5rem;font-size:.85rem;">+ ADD GROUP TO CART</button>
+
+      <!-- Cart -->
+      <div id="cart-list" style="margin-top:1.5rem;">
+        <div class="cart-empty">No groups added yet. Build one above and click "Add Group to Cart".</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Generate All -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <h2>Generate All</h2>
+    </div>
+    <div class="step-body">
+      <div style="font-family:var(--mono);font-size:.65rem;color:var(--fg-dim);margin-bottom:.75rem;">
+        Processes every group in the cart and bundles all documents into one ZIP, organized into a folder per group.
       </div>
 
       <div id="err-gen" class="err hidden" style="margin-top:.75rem;"></div>
@@ -354,7 +371,7 @@
         <div class="dl-row" id="dl-row"></div>
       </div>
 
-      <button class="btn btn-primary" id="btn-gen" onclick="generate()" disabled style="margin-top:1rem">⚡ GENERATE</button>
+      <button class="btn btn-primary" id="btn-gen" onclick="generateAll()" disabled style="margin-top:1rem">⚡ GENERATE ALL</button>
     </div>
   </div>
 
@@ -365,14 +382,25 @@ startClock('clock');
 document.getElementById('sess-date').valueAsDate = new Date();
 
 // ── State ──────────────────────────────────────────────────────────
-let troopList        = [];    // all loaded soldiers
-let filteredList     = [];    // after filters
-let selectedNames    = new Set();  // selected from roster
-let manualSoldiers   = [];    // [{name, rank}] added manually
-let sessionKey       = null;  // [{q, ans}] from uploaded Excel
-let manualOpen       = false;
+// Shared pool (Step 1)
+let troopList         = [];   // all soldiers loaded from Troop Info
+let manualSoldiers     = [];   // [{id, name, rank}] added manually, shared pool
+let manualIdCounter    = 0;
 
-// ── Troop Info ─────────────────────────────────────────────────────
+// In-progress "group builder" state (Step 2 form, not yet committed)
+let filteredList          = [];        // troopList after filters
+let pendingSelectedNames  = new Set(); // roster picks for the group being built
+let pendingManualSelected = new Set(); // manual-soldier ids picked for the group being built
+let pendingKey            = null;      // this group's answer key (array of answer values)
+let pendingKeyFileName    = '';
+let manualOpen            = false;
+
+// Cart (committed groups)
+let cart              = [];
+let nextGroupId        = 1;
+let lastCartSnapshot   = null; // captured at Generate All time, feeds Email Roster
+
+// ── Step 1: Soldier Pool ─────────────────────────────────────────────
 function loadTroop() {
   const input = document.getElementById('f-troop');
   if (!input.files.length) return;
@@ -387,7 +415,9 @@ function loadTroop() {
     document.getElementById('fn-troop').textContent = file.name;
     document.getElementById('filter-section').classList.remove('hidden');
     populateRankFilter();
+    pendingSelectedNames.clear();
     applyFilters();
+    updateStep1Tag();
   });
 }
 
@@ -422,19 +452,19 @@ function renderSoldierList() {
   const list = document.getElementById('soldier-list');
   if (!filteredList.length) {
     list.innerHTML = '<div class="empty-list">No soldiers match current filters.</div>';
-    updateStep1Tag();
+    updateSelCount();
     return;
   }
 
   const header = `<div class="soldier-list-header">
     <button class="btn-sm" onclick="selectAll()">ALL</button>
     <button class="btn-sm" onclick="selectNone()">NONE</button>
-    <span style="font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);margin-left:auto;">${filteredList.filter(s=>selectedNames.has(fullName(s))).length} / ${filteredList.length} visible selected</span>
+    <span style="font-family:var(--mono);font-size:.6rem;color:var(--fg-dim);margin-left:auto;">${filteredList.filter(s=>pendingSelectedNames.has(fullName(s))).length} / ${filteredList.length} visible selected</span>
   </div>`;
 
   const items = filteredList.map(s => {
     const name = fullName(s);
-    const sel  = selectedNames.has(name);
+    const sel  = pendingSelectedNames.has(name);
     const susTag = s.suspended
       ? '<span style="color:#FF5533;font-family:var(--mono);font-size:.6rem;font-weight:700;margin-left:.4rem;">⚠ SUSPENDED</span>'
       : '';
@@ -446,37 +476,35 @@ function renderSoldierList() {
   }).join('');
 
   list.innerHTML = header + items;
-  updateStep1Tag();
+  updateSelCount();
 }
 
 function fullName(s) { return `${s.last}, ${s.first}`; }
 
 function toggleSoldier(name) {
-  if (selectedNames.has(name)) selectedNames.delete(name);
-  else selectedNames.add(name);
+  if (pendingSelectedNames.has(name)) pendingSelectedNames.delete(name);
+  else pendingSelectedNames.add(name);
   renderSoldierList();
-  updateSelCount();
-  updateGenBtn();
 }
 function selectAll() {
-  filteredList.forEach(s => selectedNames.add(fullName(s)));
-  renderSoldierList(); updateSelCount(); updateGenBtn();
+  filteredList.forEach(s => pendingSelectedNames.add(fullName(s)));
+  renderSoldierList();
 }
 function selectNone() {
-  filteredList.forEach(s => selectedNames.delete(fullName(s)));
-  renderSoldierList(); updateSelCount(); updateGenBtn();
+  filteredList.forEach(s => pendingSelectedNames.delete(fullName(s)));
+  renderSoldierList();
 }
 function updateSelCount() {
+  const total = pendingSelectedNames.size + pendingManualSelected.size;
   document.getElementById('sel-count').textContent =
-    selectedNames.size + ' soldier' + (selectedNames.size!==1?'s':'') + ' selected';
+    total + ' soldier' + (total!==1?'s':'') + ' selected for this group';
 }
 function updateStep1Tag() {
-  const total = selectedNames.size + manualSoldiers.length;
-  document.getElementById('step1-tag').textContent =
-    total + ' SELECTED';
+  const total = troopList.length + manualSoldiers.length;
+  document.getElementById('step1-tag').textContent = total + ' IN POOL';
 }
 
-// ── Manual Add ─────────────────────────────────────────────────────
+// ── Manual Add (Step 1, shared pool) ──────────────────────────────────
 function toggleManualAdd() {
   manualOpen = !manualOpen;
   document.getElementById('manual-fields').classList.toggle('show', manualOpen);
@@ -487,65 +515,91 @@ function addManualSoldier() {
   const name = document.getElementById('m-name').value.trim().toUpperCase();
   const rank = document.getElementById('m-rank').value;
   if (!name) { alert('Enter a name.'); return; }
-  manualSoldiers.push({ name, rank });
+  manualSoldiers.push({ id: manualIdCounter++, name, rank });
   document.getElementById('m-name').value = '';
   document.getElementById('m-rank').value = '';
   renderManualList();
+  renderManualPicker();
   updateStep1Tag();
-  updateGenBtn();
 }
 
-function removeManual(idx) {
-  manualSoldiers.splice(idx, 1);
+function removeManual(id) {
+  manualSoldiers = manualSoldiers.filter(s => s.id !== id);
+  pendingManualSelected.delete(id);
   renderManualList();
+  renderManualPicker();
   updateStep1Tag();
-  updateGenBtn();
 }
 
 function renderManualList() {
   const el = document.getElementById('manual-added-list');
   if (!manualSoldiers.length) { el.innerHTML = ''; return; }
   el.innerHTML = '<div style="margin-top:.5rem;">' +
-    manualSoldiers.map((s,i) =>
+    manualSoldiers.map((s) =>
       `<span class="manual-tag">${s.rank ? s.rank+' ' : ''}${s.name}
-        <button onclick="removeManual(${i})">✕</button>
+        <button onclick="removeManual(${s.id})">✕</button>
       </span>`).join('') + '</div>';
 }
 
-// ── Answer Key ─────────────────────────────────────────────────────
-function loadAnswerKey() {
+// ── Manual-soldier picker (Step 2) ────────────────────────────────────
+function renderManualPicker() {
+  const wrap = document.getElementById('manual-picker-section');
+  if (!manualSoldiers.length) { wrap.innerHTML = ''; return; }
+  const items = manualSoldiers.map(s => {
+    const sel = pendingManualSelected.has(s.id);
+    return `<div class="soldier-item ${sel?'selected':''}" onclick="toggleManualPick(${s.id})">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleManualPick(${s.id})">
+      <span>${s.rank ? s.rank+' ' : ''}${s.name}</span>
+      <span class="s-platoon">MANUAL</span>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `
+    <div style="font-family:var(--cond);font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-dim);margin:.75rem 0 .35rem;">Soldiers Not On Roster</div>
+    <div class="soldier-list">${items}</div>`;
+}
+
+function toggleManualPick(id) {
+  if (pendingManualSelected.has(id)) pendingManualSelected.delete(id);
+  else pendingManualSelected.add(id);
+  renderManualPicker();
+  updateSelCount();
+}
+
+// ── Answer Key (Step 2, per-group) ────────────────────────────────────
+function loadGroupAnswerKey() {
   const input = document.getElementById('f-key');
   if (!input.files.length) return;
   const file = input.files[0];
   workbookFromFile(file).then(wb => {
     const ws  = wb.Sheets[wb.SheetNames[0]];
     const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-    sessionKey = [];
+    const key = [];
     for (let i = 0; i < raw.length; i++) {
       const row = raw[i];
       if (!row[1]) continue;
       const ans = String(row[1]).trim().toUpperCase();
       if (ans && ans !== 'ANSWER' && ans !== 'ANS') {
-        sessionKey.push(ans);
+        key.push(ans);
       }
     }
-    if (!sessionKey.length) { alert('No answers found. Check your file format.'); return; }
+    if (!key.length) { alert('No answers found. Check your file format.'); return; }
+
+    pendingKey = key;
+    pendingKeyFileName = file.name;
 
     document.getElementById('uz-key').classList.add('has');
     document.getElementById('fn-key').textContent = file.name;
 
-    // Show preview
     const prev = document.getElementById('key-preview');
-    prev.textContent = `KEY (${sessionKey.length} questions): ` +
-      sessionKey.map((a,i) => `${i+1}.${a}`).join('  ');
+    prev.textContent = `KEY (${key.length} questions): ` +
+      key.map((a,i) => `${i+1}.${a}`).join('  ');
     prev.classList.remove('hidden');
 
-    // Enable written test checkbox
     const opt = document.getElementById('opt-written');
     const chk = document.getElementById('chk-written');
     opt.classList.remove('disabled');
     chk.disabled = false;
-    document.getElementById('written-desc').textContent = `${sessionKey.length} questions loaded`;
+    document.getElementById('written-desc').textContent = `${key.length} questions loaded`;
     updateGenBtn();
   });
 }
@@ -570,14 +624,8 @@ function downloadKeyTemplate() {
   );
 }
 
-// ── Generate button state ──────────────────────────────────────────
+// ── Output-type checkbox visual state ─────────────────────────────────
 function updateGenBtn() {
-  const hasSoldiers = selectedNames.size > 0 || manualSoldiers.length > 0;
-  const hasOutput   = document.getElementById('chk-written').checked ||
-                      document.getElementById('chk-road').checked;
-  document.getElementById('btn-gen').disabled = !(hasSoldiers && hasOutput);
-
-  // Visual state of check boxes
   ['written','road'].forEach(t => {
     const opt = document.getElementById('opt-'+t);
     const chk = document.getElementById('chk-'+t);
@@ -587,32 +635,8 @@ function updateGenBtn() {
   });
 }
 
-// ── Email Roster (mailto — no server, no attachment) ─────────────────
-let lastSession = null; // {examiner, vehicle, route, dateStr, soldiers, doWritten, doRoad}
-
-function buildRosterEmailBody(s) {
-  const lines = [];
-  lines.push('DRIVER TESTING SESSION ROSTER');
-  lines.push(`Date: ${s.dateStr}`);
-  lines.push(`Examiner: ${s.examiner}`);
-  lines.push(`Vehicle: ${s.vehicle}`);
-  if (s.route) lines.push(`Route: ${s.route}`);
-  lines.push(`Documents: ${s.doWritten && s.doRoad ? 'Written Exam + DA 6125 Road Test' : s.doWritten ? 'Written Exam' : 'DA 6125 Road Test'}`);
-  lines.push('');
-  lines.push(`Soldiers Tested (${s.soldiers.length}):`);
-  s.soldiers.forEach((sol, i) => lines.push(`${i+1}. ${sol.rank ? sol.rank+' ' : ''}${sol.displayName}`));
-  return lines.join('\n');
-}
-
-function emailRoster() {
-  if (!lastSession) return;
-  const subject = `Driver Testing Roster — ${lastSession.vehicle} — ${lastSession.dateStr}`;
-  const body    = buildRosterEmailBody(lastSession);
-  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-// ── Generate ───────────────────────────────────────────────────────
-async function generate() {
+// ── Add Group to Cart ──────────────────────────────────────────────────
+function validateGroupForm() {
   const examiner = document.getElementById('examiner').value.trim().toUpperCase();
   const vehicle  = document.getElementById('vehicle').value.trim().toUpperCase();
   const route    = document.getElementById('route').value.trim().toUpperCase();
@@ -621,36 +645,170 @@ async function generate() {
   const doWritten = document.getElementById('chk-written').checked;
   const doRoad    = document.getElementById('chk-road').checked;
 
-  showErr(null);
-
-  if (!examiner) { showErr('Enter examiner name in Step 2.'); return; }
-  if (!vehicle)  { showErr('Enter vehicle / equipment in Step 2.'); return; }
-
-  const suspendedSelected = troopList.filter(s => selectedNames.has(fullName(s)) && s.suspended);
-  if (suspendedSelected.length) {
-    const names = suspendedSelected.map(fullName).join(', ');
-    const proceed = confirm(
-      `⚠ WARNING: The following selected soldier(s) have a SUSPENDED license per Troop Info:\n\n${names}\n\nGenerate paperwork for them anyway?`
-    );
-    if (!proceed) return;
-  }
-
-  // Build sorted soldier list
-  // Roster soldiers in platoon/rank order, then manual additions at end
   const rosterSoldiers = troopList
-    .filter(s => selectedNames.has(fullName(s)))
-    .map(s => ({ displayName: fullName(s), rank: s.rank }));
-  const allSoldiers = [
-    ...rosterSoldiers,
-    ...manualSoldiers.map(s => ({ displayName: s.name, rank: s.rank })),
-  ];
+    .filter(s => pendingSelectedNames.has(fullName(s)))
+    .map(s => ({ displayName: fullName(s), rank: s.rank, source: 'roster' }));
+  const manualPicked = manualSoldiers
+    .filter(s => pendingManualSelected.has(s.id))
+    .map(s => ({ displayName: s.name, rank: s.rank, source: 'manual' }));
+  const soldiers = [...rosterSoldiers, ...manualPicked];
 
-  if (!allSoldiers.length) { showErr('No soldiers selected.'); return; }
+  if (!soldiers.length)      return { error: 'Select at least one soldier for this group before adding it to the cart.' };
+  if (!examiner)             return { error: 'Enter an examiner name for this group.' };
+  if (!vehicle)              return { error: 'Enter a vehicle / equipment name for this group.' };
+  if (!doWritten && !doRoad) return { error: 'Select at least one output (Written Test and/or Road Test) for this group.' };
+  if (doWritten && (!pendingKey || !pendingKey.length))
+    return { error: 'Upload a written-test answer key for this group, or uncheck Written Test.' };
 
   const dateStr = new Date(dateVal + 'T12:00:00')
     .toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
 
-  lastSession = { examiner, vehicle, route, dateStr, soldiers: allSoldiers, doWritten, doRoad };
+  return {
+    group: {
+      id: nextGroupId++,
+      examiner, dateVal, dateStr, vehicle, route,
+      doWritten, doRoad,
+      keyFileName: doWritten ? pendingKeyFileName : '',
+      key: doWritten ? pendingKey : null,
+      soldiers,
+    }
+  };
+}
+
+function addGroupToCart() {
+  showErr('err-group', null);
+  const result = validateGroupForm();
+  if (result.error) { showErr('err-group', result.error); return; }
+
+  const suspendedSelected = troopList.filter(s => pendingSelectedNames.has(fullName(s)) && s.suspended);
+  if (suspendedSelected.length) {
+    const names = suspendedSelected.map(fullName).join(', ');
+    const proceed = confirm(
+      `⚠ WARNING: The following selected soldier(s) have a SUSPENDED license per Troop Info:\n\n${names}\n\nAdd this group to the cart anyway?`
+    );
+    if (!proceed) return;
+  }
+
+  cart.push(result.group);
+  resetGroupForm();
+  renderCart();
+}
+
+function resetGroupForm() {
+  document.getElementById('vehicle').value = '';
+  document.getElementById('route').value = '';
+
+  document.getElementById('chk-written').checked = false;
+  document.getElementById('chk-written').disabled = true;
+  document.getElementById('chk-road').checked = false;
+  document.getElementById('opt-written').classList.add('disabled');
+  document.getElementById('opt-written').classList.remove('checked');
+  document.getElementById('opt-road').classList.remove('checked');
+  document.getElementById('written-desc').textContent = 'Upload an answer key below to enable';
+
+  pendingKey = null;
+  pendingKeyFileName = '';
+  document.getElementById('uz-key').classList.remove('has');
+  document.getElementById('fn-key').textContent = '';
+  document.getElementById('f-key').value = '';
+  document.getElementById('key-preview').classList.add('hidden');
+  document.getElementById('key-preview').textContent = '';
+
+  pendingSelectedNames.clear();
+  pendingManualSelected.clear();
+  clearFilters(); // re-applies filters -> renderSoldierList() -> updateSelCount()
+  renderManualPicker();
+  updateSelCount();
+}
+
+// ── Cart rendering ─────────────────────────────────────────────────────
+function renderCart() {
+  document.getElementById('cart-tag').textContent = cart.length + ' GROUP' + (cart.length!==1?'S':'');
+
+  const wrap = document.getElementById('cart-list');
+  if (!cart.length) {
+    wrap.innerHTML = '<div class="cart-empty">No groups added yet. Build one above and click "Add Group to Cart".</div>';
+  } else {
+    wrap.innerHTML = cart.map((g, i) => {
+      const badges = [
+        g.doWritten ? '<span class="badge-out">WRITTEN</span>' : '',
+        g.doRoad    ? '<span class="badge-out">ROAD</span>'    : '',
+      ].join('');
+      const soldierNames = g.soldiers.map(s => `${s.rank?s.rank+' ':''}${s.displayName}`).join(' · ');
+      return `<div class="cart-item">
+        <div class="cart-item-head">
+          <span class="cart-item-num">GROUP ${i+1}</span>
+          <span class="cart-item-vehicle">${g.vehicle}</span>
+          ${badges}
+          <button class="btn-sm" onclick="removeGroupFromCart(${g.id})">✕ REMOVE</button>
+        </div>
+        <div class="cart-item-details">EXAMINER: ${g.examiner} &nbsp;|&nbsp; DATE: ${g.dateStr}${g.route ? ' &nbsp;|&nbsp; ROUTE: '+g.route : ''} &nbsp;|&nbsp; ${g.soldiers.length} SOLDIER${g.soldiers.length!==1?'S':''}</div>
+        <div class="cart-item-soldiers">${soldierNames}</div>
+      </div>`;
+    }).join('');
+  }
+  updateGenerateAllBtn();
+}
+
+function removeGroupFromCart(id) {
+  cart = cart.filter(g => g.id !== id);
+  renderCart();
+}
+
+function updateGenerateAllBtn() {
+  document.getElementById('btn-gen').disabled = cart.length === 0;
+}
+
+// ── Email Roster (mailto — no server, no attachment) ─────────────────
+function buildRosterEmailBody(groups) {
+  const lines = [];
+  lines.push('DRIVER TESTING SESSION ROSTER');
+  lines.push(`Groups: ${groups.length}`);
+  lines.push('');
+  groups.forEach((g, i) => {
+    lines.push(`── GROUP ${i+1} — ${g.vehicle} ──`);
+    lines.push(`Examiner: ${g.examiner}`);
+    lines.push(`Date: ${g.dateStr}`);
+    if (g.route) lines.push(`Route: ${g.route}`);
+    lines.push(`Documents: ${g.doWritten && g.doRoad ? 'Written Exam + DA 6125 Road Test' : g.doWritten ? 'Written Exam' : 'DA 6125 Road Test'}`);
+    lines.push(`Soldiers Tested (${g.soldiers.length}):`);
+    g.soldiers.forEach((sol, j) => lines.push(`${j+1}. ${sol.rank ? sol.rank+' ' : ''}${sol.displayName}`));
+    lines.push('');
+  });
+  const uniqueSoldiers = new Set(groups.flatMap(g => g.soldiers.map(s => s.displayName)));
+  lines.push(`SUMMARY: ${groups.length} group${groups.length!==1?'s':''}, ${uniqueSoldiers.size} unique soldier${uniqueSoldiers.size!==1?'s':''}`);
+  return lines.join('\n');
+}
+
+function emailRoster() {
+  if (!lastCartSnapshot || !lastCartSnapshot.length) return;
+  const today = new Date().toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+  const subject = `Driver Testing Roster — ${lastCartSnapshot.length} Group(s) — ${today}`;
+  const body    = buildRosterEmailBody(lastCartSnapshot);
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// ── Generate All ───────────────────────────────────────────────────────
+function sanitizeFilePart(s) {
+  return (s || '').trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_-]/g, '');
+}
+
+async function mergeAllPDFs(blobs) {
+  const { PDFDocument } = PDFLib;
+  const mergedDoc = await PDFDocument.create();
+  for (const srcBlob of blobs) {
+    const srcBytes = await srcBlob.arrayBuffer();
+    const srcDoc   = await PDFDocument.load(srcBytes);
+    const pages    = await mergedDoc.copyPages(srcDoc, srcDoc.getPageIndices());
+    pages.forEach(p => mergedDoc.addPage(p));
+  }
+  const mergedBytes = await mergedDoc.save();
+  return new Blob([mergedBytes], {type:'application/pdf'});
+}
+
+async function generateAll() {
+  showErr('err-gen', null);
+  if (!cart.length) { showErr('err-gen', 'Add at least one testing group to the cart before generating.'); return; }
 
   const spin = document.getElementById('spin-gen');
   spin.style.display = 'flex';
@@ -658,101 +816,70 @@ async function generate() {
   document.getElementById('dl-panel').classList.add('hidden');
 
   try {
-    const names = allSoldiers.map(s => s.displayName);
-
-    if (doWritten && doRoad) {
-      // Both — ZIP + merged single PDF option
-      document.getElementById('spin-msg').textContent = 'GENERATING ZIP...';
-      const zip = new JSZip();
-
-      const writtenBlob = buildAnswerSheetsPDF(names, examiner, vehicle, dateStr, sessionKey);
-      zip.file('WrittenExam_AnswerSheets.pdf', writtenBlob);
-
-      let templateBytes = null;
+    const anyRoad = cart.some(g => g.doRoad);
+    let templateBytes = null;
+    if (anyRoad) {
       try { const r = await fetch('assets/road_test.pdf'); if (r.ok) templateBytes = await r.arrayBuffer(); } catch(e){}
-      const roadBlob = await buildRoadTestPDF(names, examiner, vehicle, route, dateStr, templateBytes);
-      zip.file('RoadTest_DA6125.pdf', roadBlob);
+    }
 
-      const zipBlob = await zip.generateAsync({type:'blob'});
+    document.getElementById('spin-msg').textContent = 'GENERATING DOCUMENTS...';
+    const zip = new JSZip();
+    const allBlobs = [];
 
-      // Also build merged single PDF
-      const { PDFDocument } = PDFLib;
-      const mergedDoc = await PDFDocument.create();
-      for (const srcBlob of [writtenBlob, roadBlob]) {
-        const srcBytes = await srcBlob.arrayBuffer();
-        const srcDoc   = await PDFDocument.load(srcBytes);
-        const pages    = await mergedDoc.copyPages(srcDoc, srcDoc.getPageIndices());
-        pages.forEach(p => mergedDoc.addPage(p));
+    for (let i = 0; i < cart.length; i++) {
+      const g = cart[i];
+      const groupNum = String(i+1).padStart(2,'0');
+      const prefix = `Group${groupNum}_${sanitizeFilePart(g.vehicle) || 'VEHICLE'}`;
+      const names = g.soldiers.map(s => s.displayName);
+
+      if (g.doWritten) {
+        const blob = buildAnswerSheetsPDF(names, g.examiner, g.vehicle, g.dateStr, g.key);
+        zip.file(`${prefix}/WrittenExam_AnswerSheets.pdf`, blob);
+        allBlobs.push(blob);
       }
-      const mergedBytes = await mergedDoc.save();
-      const mergedBlob  = new Blob([mergedBytes], {type:'application/pdf'});
+      if (g.doRoad) {
+        const blob = await buildRoadTestPDF(names, g.examiner, g.vehicle, g.route, g.dateStr, templateBytes);
+        zip.file(`${prefix}/RoadTest_DA6125.pdf`, blob);
+        allBlobs.push(blob);
+      }
+    }
 
-      const row = document.getElementById('dl-row');
-      row.innerHTML = '';
+    const zipBlob = await zip.generateAsync({type:'blob'});
 
-      const btnZip = document.createElement('button');
-      btnZip.className = 'btn-dl';
-      btnZip.textContent = `📦 DOWNLOAD ZIP (SEPARATE FILES)`;
-      btnZip.onclick = () => triggerDownload(zipBlob, `TestingSession_${dateStamp()}.zip`);
-      row.appendChild(btnZip);
+    const row = document.getElementById('dl-row');
+    row.innerHTML = '';
 
+    const btnZip = document.createElement('button');
+    btnZip.className = 'btn-dl';
+    btnZip.textContent = `📦 DOWNLOAD ZIP (${allBlobs.length} DOCUMENT${allBlobs.length!==1?'S':''})`;
+    btnZip.onclick = () => triggerDownload(zipBlob, `TestingSession_${dateStamp()}.zip`);
+    row.appendChild(btnZip);
+
+    if (allBlobs.length > 1) {
+      const mergedBlob = await mergeAllPDFs(allBlobs);
       const btnPdf = document.createElement('button');
       btnPdf.className = 'btn-dl';
       btnPdf.textContent = `📄 DOWNLOAD SINGLE PDF (ALL DOCS)`;
       btnPdf.onclick = () => triggerDownload(mergedBlob, `TestingSession_${dateStamp()}.pdf`);
       row.appendChild(btnPdf);
-
-      const btnEmail1 = document.createElement('button');
-      btnEmail1.className = 'btn-dl';
-      btnEmail1.textContent = `✉ EMAIL ROSTER`;
-      btnEmail1.onclick = emailRoster;
-      row.appendChild(btnEmail1);
-
-    } else if (doWritten) {
-      document.getElementById('spin-msg').textContent = 'GENERATING ANSWER SHEETS...';
-      const blob = buildAnswerSheetsPDF(names, examiner, vehicle, dateStr, sessionKey);
-      const row  = document.getElementById('dl-row');
-      row.innerHTML = '';
-      const btn = document.createElement('button');
-      btn.className = 'btn-dl';
-      btn.textContent = `📄 DOWNLOAD ANSWER SHEETS`;
-      btn.onclick = () => triggerDownload(blob, `AnswerSheets_${dateStamp()}.pdf`);
-      row.appendChild(btn);
-
-      const btnEmail2 = document.createElement('button');
-      btnEmail2.className = 'btn-dl';
-      btnEmail2.textContent = `✉ EMAIL ROSTER`;
-      btnEmail2.onclick = emailRoster;
-      row.appendChild(btnEmail2);
-
-    } else {
-      document.getElementById('spin-msg').textContent = 'GENERATING DA 6125s...';
-      let templateBytes = null;
-      try { const r = await fetch('assets/road_test.pdf'); if (r.ok) templateBytes = await r.arrayBuffer(); } catch(e){}
-      const blob = await buildRoadTestPDF(names, examiner, vehicle, route, dateStr, templateBytes);
-      const row  = document.getElementById('dl-row');
-      row.innerHTML = '';
-      const btn = document.createElement('button');
-      btn.className = 'btn-dl';
-      btn.textContent = `📄 DOWNLOAD DA 6125 (${allSoldiers.length} SOLDIERS)`;
-      btn.onclick = () => triggerDownload(blob, `DA6125_${dateStamp()}.pdf`);
-      row.appendChild(btn);
-
-      const btnEmail3 = document.createElement('button');
-      btnEmail3.className = 'btn-dl';
-      btnEmail3.textContent = `✉ EMAIL ROSTER`;
-      btnEmail3.onclick = emailRoster;
-      row.appendChild(btnEmail3);
     }
 
+    lastCartSnapshot = [...cart];
+    const btnEmail = document.createElement('button');
+    btnEmail.className = 'btn-dl';
+    btnEmail.textContent = `✉ EMAIL ROSTER`;
+    btnEmail.onclick = emailRoster;
+    row.appendChild(btnEmail);
+
+    const totalSoldiers = new Set(cart.flatMap(g => g.soldiers.map(s => s.displayName))).size;
     document.getElementById('dl-success').textContent =
-      `✓ GENERATED FOR ${allSoldiers.length} SOLDIER${allSoldiers.length!==1?'S':''}`;
+      `✓ GENERATED ${cart.length} GROUP${cart.length!==1?'S':''} — ${allBlobs.length} DOCUMENT${allBlobs.length!==1?'S':''} — ${totalSoldiers} UNIQUE SOLDIER${totalSoldiers!==1?'S':''}`;
     document.getElementById('dl-panel').classList.remove('hidden');
 
-  } catch(e) { showErr('Generation error: ' + e.message); }
+  } catch(e) { showErr('err-gen', 'Generation error: ' + e.message); }
 
   spin.style.display = 'none';
-  document.getElementById('btn-gen').disabled = false;
+  document.getElementById('btn-gen').disabled = cart.length === 0;
 }
 
 // ── Answer Sheets PDF Builder ──────────────────────────────────────
@@ -985,12 +1112,17 @@ async function buildRoadTestPDF(soldiers, examiner, vehicle, route, dateStr, tem
 }
 
 // ── Helpers ────────────────────────────────────────────────────────
-function showErr(msg) {
-  const el = document.getElementById('err-gen');
+function showErr(id, msg) {
+  const el = document.getElementById(id);
   if (!msg) { el.classList.add('hidden'); return; }
   el.textContent = '⚠ ' + msg;
   el.classList.remove('hidden');
 }
+
+// ── Init ───────────────────────────────────────────────────────────
+renderCart();
+renderManualPicker();
+updateSelCount();
 </script>
 </body>
 </html>
